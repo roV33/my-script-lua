@@ -67,6 +67,7 @@ Luna:Notification({
         ImageSource = "Material",
         Content = "This Is A Preview Of Luna's Dynamic Notification System Entailing Estimated/Calculated Wait Times, A Sleek Design, Icons, And A Glassmorphic Look"
 })
+
 _G.AutoFarmBloxFruits = false
 _G.SenjataFarm = "Melee" 
 
@@ -76,20 +77,18 @@ local virtualUser = game:GetService("VirtualUser")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local tweenService = game:GetService("TweenService")
 
--- Sistem Anti-AFK agar Delta tidak DC saat ditinggal tidur/sekolah
+-- Anti-AFK agar Delta tidak terkena disconnect saat ditinggal tidur
 player.Idled:Connect(function()
     virtualUser:CaptureController()
     virtualUser:ClickButton2(Vector2.new(0,0))
 end)
 
--- Pustaka Pengaman agar UI Lama kamu tidak memicu error index nil
+-- Kamus Pelindung Universal agar UI lama bebas dari error index nil
 local listPelindung = {}
 setmetatable(listPelindung, { __index = function() return true end })
 local list = listPelindung; local listKite = listPelindung
 
--- ====================================================================
--- DATA PINTAR SIKLUS QUEST (Sea 1 Otomatis - Anti-Boss Filter)
--- ====================================================================
+-- Data Siklus Quest Otomatis (Sea 1 - Mengabaikan Boss)
 local function dapatkanDataQuest()
     local lvl = player.Data.Level.Value
     if lvl >= 0 and lvl < 10 then
@@ -97,7 +96,7 @@ local function dapatkanDataQuest()
     elseif lvl >= 10 and lvl < 15 then
         return "MonkeyQuest1", "Monkey", 1, CFrame.new(-1598, 36, 153)
     elseif lvl >= 15 and lvl < 30 then
-        return "MonkeyQuest1", "Gorilla", 2, CFrame.new(-1598, 36, 153) -- Mengabaikan Boss Gorilla King
+        return "MonkeyQuest1", "Gorilla", 2, CFrame.new(-1598, 36, 153)
     elseif lvl >= 30 and lvl < 60 then
         return "PirateVillageQuest", "Pirate", 1, CFrame.new(-1140, 4, 3828)
     else
@@ -105,16 +104,14 @@ local function dapatkanDataQuest()
     end
 end
 
--- ====================================================================
--- TWEEN ENGINE SPEED 300 CONSTANT (Pergerakan Terbang Halus Tidak Kaku)
--- ====================================================================
+-- Pergerakan Terbang Halus Tween Speed 300
 local function lakukanTweenKe(targetCFrame)
     local character = player.Character
     local rootPart = character and character:FindFirstChild("HumanoidRootPart")
     if not rootPart then return end
     
     local jarak = (rootPart.Position - targetCFrame.Position).Magnitude
-    local kecepatan = 300 -- Kecepatan kilat 300 studs/detik sesuai permintaanmu
+    local kecepatan = 300 
     local durasi = jarak / kecepatan
     
     local infoTween = TweenInfo.new(durasi, Enum.EasingStyle.Linear)
@@ -123,9 +120,7 @@ local function lakukanTweenKe(targetCFrame)
     terbang.Completed:Wait()
 end
 
--- ====================================================================
--- SAKELAR AUTO EQUIP WEAPON (Mendukung Melee, Sword, Fruit)
--- ====================================================================
+-- Otomatis Mengeluarkan Senjata ke Tangan sesuai Dropdown
 local function pegangSenjataOtomatis()
     local character = player.Character
     local backpack = player.Backpack
@@ -143,7 +138,7 @@ local function pegangSenjataOtomatis()
     for _, tool in ipairs(backpack:GetChildren()) do
         if tool:IsA("Tool") then
             local nameLow = string.lower(tool.Name)
-            if _G.SenjataFarm == "Melee" and (string.find(nameLow, "combat") or string.find(nameLow, "leg") or string.find(nameLow, "style") or string.find(nameLow, "claw")) then
+            if _G.SenjataFarm == "Melee" and (string.find(nameLow, "combat") or string.find(nameLow, "leg") or string.find(nameLow, "style")) then
                 humanoid:EquipTool(tool) break
             elseif _G.SenjataFarm == "Sword" and (not string.find(nameLow, "fruit") and not string.find(nameLow, "combat") and not string.find(nameLow, "leg")) then
                 humanoid:EquipTool(tool) break
@@ -155,43 +150,56 @@ local function pegangSenjataOtomatis()
 end
 
 -- ====================================================================
--- REAL SPAMMING M1 ATTACK (Memicu Kill Aura Fisika Tanpa Jeda)
+-- SUNTIKAN KHUSUS: REAL FAST ATTACK + KILL AURA (Hasil Temuan Remote Spy)
+-- Menembakkan damage instan langsung ke target menggunakan kode asli game
 -- ====================================================================
-local function eksekusiM1Spam()
+local function eksekusiKillAuraPro(namaTargetNPC)
     task.spawn(function()
+        -- Mencari folder Remote Event "RE/RegisterAttack" sesuai tangkapan data kamu
+        local netRemote = replicatedStorage:FindFirstChild("Modules") 
+            and replicatedStorage.Modules:FindFirstChild("Net") 
+            and replicatedStorage.Modules.Net:FindFirstChild("RE/RegisterAttack")
+            
         while _G.AutoFarmBloxFruits do
-            -- Jeda 0.01 detik untuk simulasi spam jari tercepat (Bypass Anti-Cheat & 119 Warnings)
-            task.wait(0.01) 
+            task.wait(0.01) -- Spam pukulan tercepat tanpa memicu warnings log
             
             local character = player.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
             local weapon = character and character:FindFirstChildOfClass("Tool")
             
-            if character and weapon then
-                -- Menembakkan trigger ayunan pukulan fisik (M1) dari client ke server game
-                pcall(function()
-                    virtualUser:CaptureController()
-                    virtualUser:Button1Down(Vector2.new(0,0))
+            if character and rootPart and weapon and netRemote then
+                local folderMusuh = workspace:FindFirstChild("Enemies") or workspace
+                
+                for _, npc in ipairs(folderMusuh:GetChildren()) do
+                    if string.find(string.lower(npc.Name), "boss") then continue end -- Abaikan Boss
                     
-                    -- Injeksi framework animasi serang lokal agar damage terdaftar
-                    local combatFramework = require(player.PlayerScripts.CombatFramework)
-                    if combatFramework and combatFramework.CombatRigController and combatFramework.CombatRigController.activeController then
-                        combatFramework.CombatRigController.activeController:attack()
+                    if npc.Name == namaTargetNPC and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
+                        local npcRoot = npc:FindFirstChild("HumanoidRootPart")
+                        if npcRoot and (npcRoot.Position - rootPart.Position).Magnitude <= 35 then
+                            
+                            -- MENEMBAKKAN REGISTER DAMAGE HASIL TEMUAN REMOTE SPY KAMU
+                            pcall(function()
+                                -- Mengirim argumen 0.4 dan 1 persis seperti struktur yang kamu dapatkan
+                                netRemote:FireServer(0.40000000596046, 1)
+                            end)
+                            
+                            -- Pemicu animasi fisik agar tangan karakter berayun ninju kilat (Gaya Skays Gaming)
+                            virtualUser:CaptureController()
+                            virtualUser:Button1Down(Vector2.new(0,0))
+                        end
                     end
-                end)
+                end
             end
         end
     end)
 end
 
 -- ====================================================================
--- CORE LOOP: NOCLIP FLY ENGINE + AUTO QUEST MANAGER
+-- CORE SIKLUS: AUTO QUEST MGR + NOCLIP FLY ENGINE
 -- ====================================================================
 local function jalankanFarmBlox()
-    -- Aktifkan sistem spam pukulan kilat (Kill Aura M1) di background
-    eksekusiM1Spam()
-    
     task.spawn(function()
-        print("Sistem Premium Auto Quest & Noclip Fly Aktif...")
+        print("Sistem Premium Auto Quest & Inject Remote Spy Aktif...")
         
         while _G.AutoFarmBloxFruits do
             task.wait(0.02)
@@ -204,27 +212,24 @@ local function jalankanFarmBlox()
                 local namaQuest, namaNPC, idQuest, posNPCQuest = dapatkanDataQuest()
                 local punyaQuest = player.PlayerGui.Main:FindFirstChild("Quest") and player.PlayerGui.Main.Quest.Visible
                 
-                -- Aktifkan mode tembus dinding (Noclip) agar pergerakan terbang tidak sangkut di pulau
+                -- Aktifkan mode tembus objek (Noclip)
                 for _, part in ipairs(character:GetChildren()) do
                     if part:IsA("BasePart") then part.CanCollide = false end
                 end
                 
                 if not punyaQuest then
-                    -- JIKA AMBIL QUEST: Bersihkan gaya apung terbang, lalu Tween meluncur halus (Speed 300)
                     if rootPart:FindFirstChild("FarmVelocity") then rootPart.FarmVelocity:Destroy() end
                     lakukanTweenKe(posNPCQuest)
                     
-                    task.wait(0.2)
+                    task.wait(0.3)
                     replicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", namaQuest, idQuest)
-                    task.wait(0.2)
+                    task.wait(0.3)
                 else
-                    -- JIKA BERBURU NPC: Cari target NPC Biasa (Abaikan Boss)
                     local folderMusuh = workspace:FindFirstChild("Enemies") or workspace
                     local targetMusuh = nil
                     
                     for _, npc in ipairs(folderMusuh:GetChildren()) do
-                        -- Saringan Ketat: Lewati jika objek adalah BOSS berdarah tebal
-                        if string.find(string.lower(npc.Name), "boss") then continue end
+                        if string.find(string.lower(npc.Name), "boss") then continue end 
                         
                         if npc.Name == namaNPC and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
                             if npc:FindFirstChild("HumanoidRootPart") then
@@ -235,27 +240,28 @@ local function jalankanFarmBlox()
                     end
                     
                     if targetMusuh and targetMusuh:FindFirstChild("HumanoidRootPart") then
-                        local posisiNPC = targetMusuh.HumanoidRootPart.Position
+                        -- Aktifkan mesin pembunuh terarah khusus untuk NPC target misi ini
+                        eksekusiKillAuraPro(namaNPC)
                         
+                        local posisiNPC = targetMusuh.HumanoidRootPart.Position
                         pegangSenjataOtomatis()
                         
-                        -- GAYA TERBANG PREMIUM (NOCLIP GYRO ENGINE): Membuat karakter melayang mulus tidak kaku
+                        -- Gaya Terbang Mulus Noclip (BodyVelocity) agar karakter tidak kaku
                         local farmBV = rootPart:FindFirstChild("FarmVelocity")
                         if not farmBV then
                             farmBV = Instance.new("BodyVelocity")
                             farmBV.Name = "FarmVelocity"
-                            farmBV.MaxForce = Vector3.new(9e9, 9e9, 9e9) -- Menghapus efek gravitasi total
-                            farmBV.Velocity = Vector3.new(0, 0, 0) -- Menjaga posisi stabil melayang
+                            farmBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                            farmBV.Velocity = Vector3.new(0, 0, 0)
                             farmBV.Parent = rootPart
                         end
                         
-                        -- SET JARAK AMAN 10 STUDS: Sesuai saran jitu kamu, melayang pas 10 studs di atas NPC (NPC Anti-Hit)
+                        -- JARAK AMAN 10 STUDS: Mengambang mulus pas 10 studs di atas kepala NPC biasa (Anti-Hit balik)
                         rootPart.CFrame = CFrame.new(posisiNPC + Vector3.new(0, 10, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
                         
                         -- Sedot musuh agar diam berkumpul menerima damage M1 Spam
                         if targetMusuh.Humanoid.WalkSpeed > 0 then targetMusuh.Humanoid.WalkSpeed = 0 end
                     else
-                        -- Jika monster area mati/belum muncul, meluncur datangi koordinat spawn utamanya
                         if rootPart:FindFirstChild("FarmVelocity") then rootPart.FarmVelocity:Destroy() end
 
 -- A. MEMBUAT DROPDOWN PILIHAN SENJATA DI LUNA UI
