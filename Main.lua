@@ -81,9 +81,6 @@ player.Idled:Connect(function()
     virtualUser:ClickButton2(Vector2.new(0,0))
 end)
 
--- ====================================================================
--- FUNGSI PINTAR AUTOMATIC EQUIP WEAPON (Mendukung Melee, Sword, & Fruit)
--- ====================================================================
 local function pegangSenjataOtomatis()
     local character = player.Character
     local backpack = player.Backpack
@@ -124,9 +121,6 @@ local function pegangSenjataOtomatis()
     end
 end
 
--- ====================================================================
--- MESIN FAST ATTACK + KILL AURA (Mendukung Klik M1 Untuk Fruit)
--- ====================================================================
 local function eksekusiKillAura()
     task.spawn(function()
         while _G.AutoFarmBloxFruits do
@@ -176,9 +170,6 @@ local function eksekusiKillAura()
     end)
 end
 
--- ====================================================================
--- MESIN TELEPORTASI & FLIGHT ANCHOR
--- ====================================================================
 local function jalankanFarmBlox()
     eksekusiKillAura()
     
