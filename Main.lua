@@ -67,7 +67,6 @@ Luna:Notification({
         ImageSource = "Material",
         Content = "This Is A Preview Of Luna's Dynamic Notification System Entailing Estimated/Calculated Wait Times, A Sleek Design, Icons, And A Glassmorphic Look"
 })
-
 _G.AutoFarmBloxFruits = false
 _G.SenjataFarm = "Melee" 
 
@@ -77,18 +76,16 @@ local virtualUser = game:GetService("VirtualUser")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local tweenService = game:GetService("TweenService")
 
--- Anti-AFK agar Delta tidak terkena disconnect saat ditinggal tidur
 player.Idled:Connect(function()
     virtualUser:CaptureController()
     virtualUser:ClickButton2(Vector2.new(0,0))
 end)
 
--- Kamus Pelindung Universal agar UI lama bebas dari error index nil
 local listPelindung = {}
 setmetatable(listPelindung, { __index = function() return true end })
 local list = listPelindung; local listKite = listPelindung
 
--- Data Siklus Quest Otomatis (Sea 1 - Mengabaikan Boss)
+-- Data Siklus Quest Otomatis (Sea 1)
 local function dapatkanDataQuest()
     local lvl = player.Data.Level.Value
     if lvl >= 0 and lvl < 10 then
@@ -120,48 +117,63 @@ local function lakukanTweenKe(targetCFrame)
     terbang.Completed:Wait()
 end
 
--- Otomatis Mengeluarkan Senjata ke Tangan sesuai Dropdown
 local function pegangSenjataOtomatis()
     local character = player.Character
     local backpack = player.Backpack
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
     if not (character and backpack and humanoid) then return end
     
-    local toolDipegang = character:FindFirstChildOfClass("Tool")
-    if toolDipegang then
-        local nameL = string.lower(toolDipegang.Name)
-        if _G.SenjataFarm == "Melee" and (string.find(nameL, "combat") or string.find(nameL, "leg") or string.find(nameL, "style")) then return end
-        if _G.SenjataFarm == "Sword" and not string.find(nameL, "fruit") and not string.find(nameL, "combat") then return end
-        if _G.SenjataFarm == "Fruit" and string.find(nameL, "fruit") then return end
-    end
+    -- Cek jika karakter sudah memegang tool di tangan agar tidak spam klik equip
+    if character:FindFirstChildOfClass("Tool") then return end
     
+    -- Memindai isi tas secara dinamis untuk mencocokkan tipe jenis senjata
     for _, tool in ipairs(backpack:GetChildren()) do
         if tool:IsA("Tool") then
-            local nameLow = string.lower(tool.Name)
-            if _G.SenjataFarm == "Melee" and (string.find(nameLow, "combat") or string.find(nameLow, "leg") or string.find(nameLow, "style")) then
-                humanoid:EquipTool(tool) break
-            elseif _G.SenjataFarm == "Sword" and (not string.find(nameLow, "fruit") and not string.find(nameLow, "combat") and not string.find(nameLow, "leg")) then
-                humanoid:EquipTool(tool) break
-            elseif _G.SenjataFarm == "Fruit" and string.find(nameLow, "fruit") then
-                humanoid:EquipTool(tool) break
+            local cocok = false
+            
+            -- Mencari tipe berdasarkan folder bawaan skrip batin Blox Fruits
+            local isFruit = string.find(string.lower(tool.Name), "fruit")
+            local hasEquipEvent = tool:FindFirstChild("EquipEvent")
+            
+            if _G.SenjataFarm == "Melee" then
+                -- Melee dicirikan memiliki properti pukulan atau bawaan awal pemain
+                if hasEquipEvent and not isFruit and (string.find(string.lower(tool.Name), "combat") or string.find(string.lower(tool.Name), "style") or string.find(string.lower(tool.Name), "karate") or string.find(string.lower(tool.Name), "leg") or string.find(string.lower(tool.Name), "claw") or string.find(string.lower(tool.Name), "fist")) then
+                    cocok = true
+                end
+            elseif _G.SenjataFarm == "Sword" then
+                -- Sword adalah weapon yang bukan buah dan bukan gaya bertarung dasar
+                if not isFruit and not string.find(string.lower(tool.Name), "combat") and not string.find(string.lower(tool.Name), "style") and not string.find(string.lower(tool.Name), "leg") then
+                    cocok = true
+                end
+            elseif _G.SenjataFarm == "Fruit" then
+                if isFruit then
+                    cocok = true
+                end
+            end
+            
+            if cocok then
+                humanoid:EquipTool(tool)
+                -- Jalankan fungsi jabat tangan jaringan temuan Cobalt secara otomatis
+                task.spawn(function()
+                    local ev = tool:FindFirstChild("EquipEvent")
+                    if ev then
+                        ev:FireServer(true)
+                    end
+                end)
+                break
             end
         end
     end
 end
 
--- ====================================================================
--- SUNTIKAN KHUSUS: REAL FAST ATTACK + KILL AURA (Hasil Temuan Remote Spy)
--- Menembakkan damage instan langsung ke target menggunakan kode asli game
--- ====================================================================
 local function eksekusiKillAuraPro(namaTargetNPC)
     task.spawn(function()
-        -- Mencari folder Remote Event "RE/RegisterAttack" sesuai tangkapan data kamu
         local netRemote = replicatedStorage:FindFirstChild("Modules") 
             and replicatedStorage.Modules:FindFirstChild("Net") 
             and replicatedStorage.Modules.Net:FindFirstChild("RE/RegisterAttack")
             
         while _G.AutoFarmBloxFruits do
-            task.wait(0.01) -- Spam pukulan tercepat tanpa memicu warnings log
+            task.wait(0.01) 
             
             local character = player.Character
             local rootPart = character and character:FindFirstChild("HumanoidRootPart")
@@ -169,37 +181,37 @@ local function eksekusiKillAuraPro(namaTargetNPC)
             
             if character and rootPart and weapon and netRemote then
                 local folderMusuh = workspace:FindFirstChild("Enemies") or workspace
+                local adaMusuh = false
                 
                 for _, npc in ipairs(folderMusuh:GetChildren()) do
-                    if string.find(string.lower(npc.Name), "boss") then continue end -- Abaikan Boss
+                    if string.find(string.lower(npc.Name), "boss") then continue end 
                     
                     if npc.Name == namaTargetNPC and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
                         local npcRoot = npc:FindFirstChild("HumanoidRootPart")
                         if npcRoot and (npcRoot.Position - rootPart.Position).Magnitude <= 35 then
+                            adaMusuh = true
                             
-                            -- MENEMBAKKAN REGISTER DAMAGE HASIL TEMUAN REMOTE SPY KAMU
                             pcall(function()
-                                -- Mengirim argumen 0.4 dan 1 persis seperti struktur yang kamu dapatkan
                                 netRemote:FireServer(0.40000000596046, 1)
                             end)
-                            
-                            -- Pemicu animasi fisik agar tangan karakter berayun ninju kilat (Gaya Skays Gaming)
-                            virtualUser:CaptureController()
-                            virtualUser:Button1Down(Vector2.new(0,0))
                         end
                     end
+                end
+                
+                if adaMusuh then
+                    pcall(function()
+                        virtualUser:CaptureController()
+                        virtualUser:Button1Down(Vector2.new(0,0))
+                    end)
                 end
             end
         end
     end)
 end
 
--- ====================================================================
--- CORE SIKLUS: AUTO QUEST MGR + NOCLIP FLY ENGINE
--- ====================================================================
 local function jalankanFarmBlox()
     task.spawn(function()
-        print("Sistem Premium Auto Quest & Inject Remote Spy Aktif...")
+        print("Sistem Auto Farm Universal Premium Aktif...")
         
         while _G.AutoFarmBloxFruits do
             task.wait(0.02)
@@ -212,7 +224,6 @@ local function jalankanFarmBlox()
                 local namaQuest, namaNPC, idQuest, posNPCQuest = dapatkanDataQuest()
                 local punyaQuest = player.PlayerGui.Main:FindFirstChild("Quest") and player.PlayerGui.Main.Quest.Visible
                 
-                -- Aktifkan mode tembus objek (Noclip)
                 for _, part in ipairs(character:GetChildren()) do
                     if part:IsA("BasePart") then part.CanCollide = false end
                 end
@@ -240,13 +251,11 @@ local function jalankanFarmBlox()
                     end
                     
                     if targetMusuh and targetMusuh:FindFirstChild("HumanoidRootPart") then
-                        -- Aktifkan mesin pembunuh terarah khusus untuk NPC target misi ini
                         eksekusiKillAuraPro(namaNPC)
                         
                         local posisiNPC = targetMusuh.HumanoidRootPart.Position
                         pegangSenjataOtomatis()
                         
-                        -- Gaya Terbang Mulus Noclip (BodyVelocity) agar karakter tidak kaku
                         local farmBV = rootPart:FindFirstChild("FarmVelocity")
                         if not farmBV then
                             farmBV = Instance.new("BodyVelocity")
@@ -256,14 +265,11 @@ local function jalankanFarmBlox()
                             farmBV.Parent = rootPart
                         end
                         
-                        -- JARAK AMAN 10 STUDS: Mengambang mulus pas 10 studs di atas kepala NPC biasa (Anti-Hit balik)
                         rootPart.CFrame = CFrame.new(posisiNPC + Vector3.new(0, 10, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
                         
-                        -- Sedot musuh agar diam berkumpul menerima damage M1 Spam
                         if targetMusuh.Humanoid.WalkSpeed > 0 then targetMusuh.Humanoid.WalkSpeed = 0 end
-                    else
-                        if rootPart:FindFirstChild("FarmVelocity") then rootPart.FarmVelocity:Destroy() end
-
+                                                else
+                                                        
 -- A. MEMBUAT DROPDOWN PILIHAN SENJATA DI LUNA UI
 local WeaponDropdown = Tab:CreateDropdown({
     Name = "Pilih Senjata Farm",
