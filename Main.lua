@@ -69,19 +69,22 @@ Luna:Notification({
 })
 
 _G.AutoFarmBloxFruits = false
-_G.SenjataFarm = "Melee" -- Bawaan awal
+_G.SenjataFarm = "Melee" -- Pilihan default awal
 
 local player = game.Players.LocalPlayer
 local workspace = game:GetService("Workspace")
 local virtualUser = game:GetService("VirtualUser")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 
--- Anti-AFK Pelindung Disconnect
+-- Anti-AFK Pelindung dari Kick Server Roblox (20 Menit)
 player.Idled:Connect(function()
     virtualUser:CaptureController()
     virtualUser:ClickButton2(Vector2.new(0,0))
 end)
 
+-- ====================================================================
+-- PERBAIKAN 1: AUTO EQUIP WEAPON AKURAT DARI DROPDOWN
+-- ====================================================================
 local function pegangSenjataOtomatis()
     local character = player.Character
     local backpack = player.Backpack
@@ -89,34 +92,32 @@ local function pegangSenjataOtomatis()
     
     if not (character and backpack and humanoid) then return end
     
-    -- Jika sudah megang senjata kustom di tangan, jangan di-spam
+    -- Ambil tool yang saat ini sedang dipegang di tangan (jika ada)
     local toolDipegang = character:FindFirstChildOfClass("Tool")
     if toolDipegang then
         local namaTool = string.lower(toolDipegang.Name)
-        if _G.SenjataFarm == "Melee" and (string.find(namaTool, "combat") or string.find(namaTool, "leg") or string.find(namaTool, "style") or string.find(namaTool, "claw")) then return end
-        if _G.SenjataFarm == "Sword" and not string.find(namaTool, "fruit") and not string.find(namaTool, "combat") then return end
+        if _G.SenjataFarm == "Melee" and (string.find(namaTool, "combat") or string.find(namaTool, "leg") or string.find(namaTool, "style") or string.find(namaTool, "claw") or string.find(namaTool, "fist") or string.find(namaTool, "karate")) then return end
+        if _G.SenjataFarm == "Sword" and not string.find(namaTool, "fruit") and not string.find(namaTool, "combat") and not string.find(namaTool, "leg") then return end
         if _G.SenjataFarm == "Fruit" and string.find(namaTool, "fruit") then return end
     end
     
-    -- Bongkar isi tas untuk equip sesuai pilihan dropdown
+    -- Scan Backpack (Tas) untuk mencari senjata yang cocok dengan pilihan dropdown kamu
     for _, tool in ipairs(backpack:GetChildren()) do
         if tool:IsA("Tool") then
             local namaToolLow = string.lower(tool.Name)
             
             if _G.SenjataFarm == "Melee" then
-                -- Mencari combat, dark step, electric, dll.
-                if string.find(namaToolLow, "combat") or string.find(namaToolLow, "leg") or string.find(namaToolLow, "style") or string.find(namaToolLow, "claw") or string.find(namaToolLow, "fist") then
+                if string.find(namaToolLow, "combat") or string.find(namaToolLow, "leg") or string.find(namaToolLow, "style") or string.find(namaToolLow, "claw") or string.find(namaToolLow, "fist") or string.find(namaToolLow, "karate") then
                     humanoid:EquipTool(tool)
                     break
                 end
             elseif _G.SenjataFarm == "Sword" then
-                -- Mengambil pedang apa pun yang bukan pukulan / bukan buah
-                if not string.find(namaToolLow, "fruit") and not string.find(namaToolLow, "combat") then
+                -- Ambil pedang apa pun yang bukan gaya pukul dan bukan buah iblis
+                if not string.find(namaToolLow, "fruit") and not string.find(namaToolLow, "combat") and not string.find(namaToolLow, "leg") and not string.find(namaToolLow, "style") then
                     humanoid:EquipTool(tool)
                     break
                 end
             elseif _G.SenjataFarm == "Fruit" then
-                -- Mengambil buah iblis yang bisa dipukul (M1)
                 if string.find(namaToolLow, "fruit") then
                     humanoid:EquipTool(tool)
                     break
@@ -126,10 +127,13 @@ local function pegangSenjataOtomatis()
     end
 end
 
+-- ====================================================================
+-- PERBAIKAN 3: FAST ATTACK + COMBAT SYSTEM REGISTER (KILL AURA)
+-- ====================================================================
 local function eksekusiKillAura()
     task.spawn(function()
         while _G.AutoFarmBloxFruits do
-            task.wait(0.03) -- Kecepatan pukul stabil secepat kilat tanpa warning spam
+            task.wait(0.02) -- Kecepatan pukulan kilat (Fast Attack)
             
             local character = player.Character
             local rootPart = character and character:FindFirstChild("HumanoidRootPart")
@@ -139,11 +143,11 @@ local function eksekusiKillAura()
                 local folderMusuh = workspace:FindFirstChild("Enemies") or workspace
                 local daftarTarget = {}
                 
+                -- Mengumpulkan semua target musuh dalam jangkauan serangan 35 studs
                 for _, npc in ipairs(folderMusuh:GetChildren()) do
                     if npc and npc.Parent and npc:IsA("Model") and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
                         local npcRoot = npc:FindFirstChild("HumanoidRootPart")
                         if npcRoot and npcRoot.Parent then
-                            -- Jarak scan diperluas sedikit agar pas dengan ketinggian terbang baru
                             local jarak = (npcRoot.Position - rootPart.Position).Magnitude
                             if jarak <= 35 then
                                 table.insert(daftarTarget, npcRoot) 
@@ -152,15 +156,15 @@ local function eksekusiKillAura()
                     end
                 end
                 
-                -- TEMBAK REGISTER DAMAGE KE SERVER
+                -- JIKA MUSUH MASUK JANGKAUAN, AKTIFKAN DAMAGE REGISTER & FAST ATTACK
                 if #daftarTarget > 0 then
-                    -- Kirim paket data pukulan resmi biar kill aura berfungsi mutlak
+                    -- 1. Jalur Remote Event Damage Register resmi Blox Fruits
                     local net = replicatedStorage:FindFirstChild("Modules") and replicatedStorage.Modules:FindFirstChild("Net")
                     if net then
                         net:RemoteEvent("Attack"):FireServer(daftarTarget)
                     end
                     
-                    -- Simulasi klik M1 fisik agar buah/senjata memicu efek pukulan
+                    -- 2. Simulasi M1 Klik fisik (Penyelamat agar Fast Attack Fruit & Senjata memukul aktif)
                     virtualUser:CaptureController()
                     virtualUser:Button1Down(Vector2.new(0,0))
                 end
@@ -169,14 +173,18 @@ local function eksekusiKillAura()
     end)
 end
 
+-- ====================================================================
+-- PERBAIKAN 2: POSITIONING FLY ANCHOR (10 STUDS DI ATAS KEPALA NPC)
+-- ====================================================================
 local function jalankanFarmBlox()
+    -- Aktifkan sistem Kill Aura di background
     eksekusiKillAura()
     
     task.spawn(function()
         print("Sistem Penerbangan Kaku & Kill Aura Aktif...")
         
         while _G.AutoFarmBloxFruits do
-            task.wait(0.02) -- Refresh posisi sangat cepat agar tidak goyang jatuh
+            task.wait(0.01) -- Penyegaran posisi super cepat agar karakter tidak jatuh / bergetar
             
             local character = player.Character
             local rootPart = character and character:FindFirstChild("HumanoidRootPart")
@@ -186,6 +194,7 @@ local function jalankanFarmBlox()
                 local folderMusuh = workspace:FindFirstChild("Enemies") or workspace
                 local targetMusuh = nil
                 
+                -- Mencari NPC monster terdekat yang masih hidup untuk diserang
                 for _, npc in ipairs(folderMusuh:GetChildren()) do
                     if npc and npc.Parent and npc:IsA("Model") and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
                         if npc:FindFirstChild("HumanoidRootPart") then
@@ -198,27 +207,27 @@ local function jalankanFarmBlox()
                 if targetMusuh and targetMusuh:FindFirstChild("HumanoidRootPart") then
                     local posisiNPC = targetMusuh.HumanoidRootPart.Position
                     
-                    -- Keluarkan senjata pilihan dropdown ke tangan secara berkala
+                    -- Panggil penggantian senjata otomatis dari tas
                     pegangSenjataOtomatis()
                     
-                    -- KUNCI KARAKTER TOTAL (ANCHOR): Membuat karakter kaku melayang meluncur, anti-jatuh!
+                    -- GAYA SCRIPT PREMIUM: Kunci total karakter di udara (Anchor = true) agar anti-gravitasi
                     rootPart.Anchored = true
                     
-                    -- POSISI BARU (8.5 STUDS DI ATAS KEPALA): Jarak aman mutlak agar NPC tidak bisa memukul balik!
-                    rootPart.CFrame = CFrame.new(posisiNPC + Vector3.new(0, 8.5, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
+                    -- POSISI 10 STUDS: Sesuai saranmu, dipasang tepat 10 studs di atas kepala musuh menghadap ke bawah (NPC anti-hit)
+                    rootPart.CFrame = CFrame.new(posisiNPC + Vector3.new(0, 10, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
                     
-                    -- Sedot musuh agar diam di area jangkauan Kill Aura
+                    -- Kunci pergerakan musuh (Bring Mob) agar tetap diam di area Kill Aura kamu
                     if targetMusuh:FindFirstChild("Humanoid") and targetMusuh.Humanoid.WalkSpeed > 0 then
                         targetMusuh.Humanoid.WalkSpeed = 0
                     end
                 else
-                    -- Jika musuh mati/belum muncul, matikan anchor sedetik agar gravitasi tidak glitch
+                    -- Lepas kuncian melayang sejenak jika musuh belum spawn agar tidak bug macet di langit
                     rootPart.Anchored = false
                 end
             end
         end
         
-        -- Reset total tubuh saat tombol dimatikan ke [OFF]
+        -- Bagian Pelepasan Tubuh total saat tombol di-OFF kan
         local character = player.Character
         local rootPart = character and character:FindFirstChild("HumanoidRootPart")
         if rootPart then
@@ -227,6 +236,7 @@ local function jalankanFarmBlox()
         print("Sistem Farm Dihentikan.")
     end)
 end
+
 
 -- A. MEMBUAT DROPDOWN PILIHAN SENJATA DI LUNA UI
 local WeaponDropdown = Tab:CreateDropdown({
@@ -259,7 +269,7 @@ local ToggleBlox = Tab:CreateToggle({
 })
 
 
-Tab:CreateSection("This Is a section, below is a divider")
+Tab:CreateSection("COOMING SOON")
 Tab:CreateDivider()
 
 local ConfigTab = Window:CreateTab({
