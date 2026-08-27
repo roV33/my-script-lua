@@ -2,12 +2,12 @@
 local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
 
 local Window = Luna:CreateWindow({
-        Name = "Colz Hub", -- This Is Title Of Your Window
-        Subtitle = "BLOX FRUIT", -- A Gray Subtitle next To the main title.
+        Name = "Luna Example Window", -- This Is Title Of Your Window
+        Subtitle = "A Gray Subtitle", -- A Gray Subtitle next To the main title.
         LogoID = "82795327169782", -- The Asset ID of your logo. Set to nil if you do not have a logo for Luna to use.
         LoadingEnabled = true, -- Whether to enable the loading animation. Set to false if you do not want the loading screen or have your own custom one.
-        LoadingTitle = "Welcome to my Hub", -- Header for loading screen
-        LoadingSubtitle = "by R.O", -- Subtitle for loading screen
+        LoadingTitle = "Luna Interface Suite", -- Header for loading screen
+        LoadingSubtitle = "by Nebula Softworks", -- Subtitle for loading screen
 
         ConfigSettings = {
                 RootFolder = nil, -- The Root Folder Is Only If You Have A Hub With Multiple Game Scripts and u may remove it. DO NOT ADD A SLASH
@@ -16,12 +16,12 @@ local Window = Luna:CreateWindow({
 
         KeySystem = true, -- As Of Beta 6, Luna Has officially Implemented A Key System!
         KeySettings = {
-                Title = "CLZ key system",
+                Title = "Luna Example Key",
                 Subtitle = "Key System",
-                Note = "This script no key but you need to complete 3taks in linkvertise for get prem key!",
+                Note = "Best Key System Ever! Also, Please Use A HWID Keysystem like Pelican, Luarmor etc. that provide key strings based on your HWID since putting a simple string is very easy to bypass, the key is 1234!",
                 SaveInRoot = false, -- Enabling will save the key in your RootFolder (YOU MUST HAVE ONE BEFORE ENABLING THIS OPTION)
                 SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-                Key = {"FREE_PREMKEYCLZ=?iabev@hsv17g"},
+                Key = {"1234"},
                 SecondAction = {
                         Enabled = true,
                         Type = "Link", -- You can also put discord as an option, if your are doing that, don’t include discord.gg as Luna will auto add it as a prefix, just replace it with your identifier, example, if your are doing discord.gg/mspaint, just use mspaint.
@@ -62,123 +62,209 @@ local Tab = Window:CreateTab({
 })
 
 Luna:Notification({
-        Title = "Notification",
+        Title = "Luna Notification Example",
         Icon = "notifications_active",
         ImageSource = "Material",
-        Content = "THANKS FOR USE MY SCRIPT!"
+        Content = "This Is A Preview Of Luna's Dynamic Notification System Entailing Estimated/Calculated Wait Times, A Sleek Design, Icons, And A Glassmorphic Look"
 })
 
+_G.AutoFarmBloxFruits = false
+_G.SenjataFarm = "Melee" -- Pilihan bawaan awal (Melee / Sword / Fruit)
+
+local player = game.Players.LocalPlayer
+local workspace = game:GetService("Workspace")
+local virtualUser = game:GetService("VirtualUser")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+
+player.Idled:Connect(function()
+    virtualUser:CaptureController()
+    virtualUser:ClickButton2(Vector2.new(0,0))
+end)
+
+-- ====================================================================
+-- FUNGSI PINTAR AUTOMATIC EQUIP WEAPON (Mendukung Melee, Sword, & Fruit)
+-- ====================================================================
+local function pegangSenjataOtomatis()
+    local character = player.Character
+    local backpack = player.Backpack
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    
+    if not (character and backpack and humanoid) then return end
+    
+    -- Cek apakah senjata yang dimaksud sudah dipegang di tangan agar tidak spam equip
+    if character:FindFirstChild(_G.SenjataFarm) then return end
+    
+    -- JIKA PILIHANNYA ADALAH MELEE (Pukulan/Gaya Tarung)
+    if _G.SenjataFarm == "Melee" then
+        -- Mencari Combat, Black Leg, Electro, Fishman Kung Fu, dll.
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") and tool:FindFirstChild("Tooltip") and tool.Tooltip.Value == "Melee" then
+                humanoid:EquipTool(tool)
+                break
+            end
+        end
+        
+    -- JIKA PILIHANNYA ADALAH SWORD (Pedang)
+    elseif _G.SenjataFarm == "Sword" then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") and tool:FindFirstChild("Tooltip") and tool.Tooltip.Value == "Sword" then
+                humanoid:EquipTool(tool)
+                break
+            end
+        end
+        
+    -- JIKA PILIHANNYA ADALAH FRUIT (Buah Iblis - Only M1 Click)
+    elseif _G.SenjataFarm == "Fruit" then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") and (tool:FindFirstChild("Tooltip") and tool.Tooltip.Value == "Blox Fruit" or string.find(string.lower(tool.Name), "fruit")) then
+                humanoid:EquipTool(tool)
+                break
+            end
+        end
+    end
+end
+
+-- ====================================================================
+-- MESIN FAST ATTACK + KILL AURA (Mendukung Klik M1 Untuk Fruit)
+-- ====================================================================
+local function eksekusiKillAura()
+    task.spawn(function()
+        while _G.AutoFarmBloxFruits do
+            task.wait(0.04) 
+            
+            local character = player.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+            
+            -- Mencari tool apa pun yang sedang dipegang karakter saat ini
+            local weaponDipegang = character and character:FindFirstChildOfClass("Tool")
+            
+            if character and rootPart and weaponDipegang then
+                local folderMusuh = workspace:FindFirstChild("Enemies") or workspace
+                local daftarTarget = {}
+                
+                for _, npc in ipairs(folderMusuh:GetChildren()) do
+                    if npc and npc.Parent and npc:IsA("Model") and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
+                        local npcRoot = npc:FindFirstChild("HumanoidRootPart")
+                        if npcRoot and npcRoot.Parent then
+                            local jarak = (npcRoot.Position - rootPart.Position).Magnitude
+                            if jarak <= 25 then
+                                table.insert(daftarTarget, npcRoot) 
+                            end
+                        end
+                    end
+                end
+                
+                -- EKSEKUSI SERANGAN
+                if #daftarTarget > 0 then
+                    -- JIKA PILIHANNYA FRUIT, MAKA WAJIB ONLY M1 CLICK (Simulasi Tap Layangan Delta)
+                    if _G.SenjataFarm == "Fruit" then
+                        virtualUser:CaptureController()
+                        virtualUser:Button1Down(Vector2.new(0,0))
+                    else
+                        -- Jika Melee atau Sword, gunakan kombinasi remote event resmi biar kencang
+                        local net = replicatedStorage:FindFirstChild("Modules") and replicatedStorage.Modules:FindFirstChild("Net")
+                        if net then
+                            net:RemoteEvent("Attack"):FireServer(daftarTarget)
+                        else
+                            virtualUser:CaptureController()
+                            virtualUser:Button1Down(Vector2.new(0,0))
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ====================================================================
+-- MESIN TELEPORTASI & FLIGHT ANCHOR
+-- ====================================================================
+local function jalankanFarmBlox()
+    eksekusiKillAura()
+    
+    task.spawn(function()
+        print("Sistem Pro Auto Farm Blox Fruits Aktif...")
+        
+        while _G.AutoFarmBloxFruits do
+            task.wait(0.05) 
+            
+            local character = player.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            
+            if character and rootPart and humanoid and humanoid.Health > 0 then
+                local folderMusuh = workspace:FindFirstChild("Enemies") or workspace
+                local targetMusuh = nil
+                
+                for _, npc in ipairs(folderMusuh:GetChildren()) do
+                    if npc and npc.Parent and npc:IsA("Model") and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
+                        if npc:FindFirstChild("HumanoidRootPart") then
+                            targetMusuh = npc
+                            break
+                        end
+                    end
+                end
+                
+                if targetMusuh and targetMusuh:FindFirstChild("HumanoidRootPart") then
+                    local posisiNPC = targetMusuh.HumanoidRootPart.Position
+                    
+                    -- Panggil fungsi ganti senjata otomatis secara dinamis sesuai dropdown
+                    pegangSenjataOtomatis()
+                    
+                    rootPart.Anchored = true
+                    rootPart.CFrame = CFrame.new(posisiNPC + Vector3.new(0, 4, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
+                    
+                    if targetMusuh:FindFirstChild("Humanoid") and targetMusuh.Humanoid.WalkSpeed > 0 then
+                        targetMusuh.Humanoid.WalkSpeed = 0
+                    end
+                else
+                    rootPart.Anchored = false
+                end
+            end
+        end
+        
+        local character = player.Character
+        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+        if rootPart then rootPart.Anchored = false end
+    end)
+end
+
+-- A. MEMBUAT DROPDOWN PILIHAN SENJATA DI LUNA UI
+local WeaponDropdown = Tab:CreateDropdown({
+    Name = "Pilih Senjata Farm",
+    Description = "Pilih jenis senjata sebelum menyalakan Auto Farm",
+    Options = {"Melee", "Sword", "Fruit"},
+    CurrentOption = "Melee", -- Bawaan awal memilih Melee
+    Callback = function(Option)
+        _G.SenjataFarm = Option -- Mengubah target tipe senjata secara langsung saat diklik
+        print("Senjata farm diganti menjadi: " .. Option)
+    end
 })
 
-Tab:CreateSection("MAIN")
+-- B. MEMBUAT SAKELAR TOGGLE AUTO FARM
+local ToggleBlox = Tab:CreateToggle({
+    Name = "Auto Farm + Kill Aura (Blox Fruits)",
+    Description = "Otomatis ganti senjata pilihan dropdown + Flight Anchor",
+    CurrentValue = false,
+    Callback = function(State)
+        _G.AutoFarmBloxFruits = State 
+        
+        if State then
+            jalankanFarmBlox() 
+        else
+            local character = player.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+            if rootPart then rootPart.Anchored = false end
+        end
+    end
+})
+
+
+Tab:CreateSection("This Is a section, below is a divider")
 Tab:CreateDivider()
-
-local Toggle = Tab:CreateToggle({
-        Name = "Auto farm",
-        Description = nil,
-        CurrentValue = false,
-        Callback = function(Value)
-                print("Toggle state is:", Value)
-        end
-}, "Toggle")
-
-Tab:CreateSection("Farm bone")
-Tab:CreateDivider()
-
-local Slider = Tab:CreateSlider({
-        Name = "Slider Example",
-        Range = {0, 200},
-        Increment = 5,
-        CurrentValue = 100,
-        Callback = function(Value)
-                print("Slider value is:", Value)
-        end
-}, "Slider")
-
-local ColorPicker = Tab:CreateColorPicker({
-        Name = "Color Picker Example",
-        Color = Color3.fromRGB(86, 171, 128),
-        Flag = "ColorPicker1",
-        Callback = function(Value)
-                print("Selected Color RGB:", Value.R * 255, Value.G * 255, Value.B * 255)
-        end
-}, "ColorPicker")
-
-local Input = Tab:CreateInput({
-        Name = "Dynamic Input Example",
-        Description = nil,
-        PlaceholderText = "Input Placeholder",
-        CurrentValue = "",
-        Numeric = false,
-        MaxCharacters = nil,
-        Enter = false,
-        Callback = function(Text)
-                print("Input box text:", Text)
-        end
-}, "Input")
-
-local Dropdown = Tab:CreateDropdown({
-        Name = "Dropdown Example",
-        Description = nil,
-        Options = {
-                "Option 1", "Option 2", "Option 3", "Option 4", "Option 5",
-                "Option 6", "Option 7", "Option 8", "Option 9", "Option 10",
-                "Option 11", "Option 12", "Option 13", "Option 14", "Option 15",
-                "Option 16", "Option 17", "Option 18", "Option 19", "Option 20",
-                "Option 21", "Option 22", "Option 23", "Option 24", "Option 25"
-        },
-        CurrentOption = {"Option 1"},
-        MultipleOptions = false,
-        SpecialType = nil,
-        Callback = function(Options)
-                print("Dropdown selected:", Options)
-        end
-}, "Dropdown")
-
-local Bind = Tab:CreateBind({
-        Name = "Bind Example",
-        Description = nil,
-        CurrentBind = "Q",
-        HoldToInteract = false,
-        Callback = function(BindState)
-                print("Keybind activated. State:", BindState)
-        end,
-        OnChangedCallback = function(Bind)
-                print("Keybind changed to:", Bind.Name)
-        end,
-}, "Bind")
-
-local Label1 = Tab:CreateLabel({
-        Text = "This is a Default Label",
-        Style = 1
-})
-
-local Label2 = Tab:CreateLabel({
-        Text = "This is an Information Label",
-        Style = 2
-})
-
-local Label3 = Tab:CreateLabel({
-        Text = "This is a Warning Label",
-        Style = 3
-})
-
-local Paragraph = Tab:CreateParagraph({
-        Title = "Paragraph Example ",
-        Text = "This Is A Paragraph. You Can Type Very Long Strings Here And They'll Automatically Fit! This Counts As A Description Right? Right? Right? Right? Right? Right? Right? Right? Right? Right? Right? Right? Right? Right? Right? Also Did I Mention This Has Rich Text? Also Did I Mention This Has Rich Text? Also Did I Mention This Has Rich Text? Also Did I Mention This Has Rich Text? Also Did I Mention This Has Rich Text? Also Did I Mention This Has Rich Text?"
-})
-
-local ThemeTab = Window:CreateTab({
-        Name = "Theme Tab",
-        Icon = "palette",
-        ImageSource = "Material",
-        ShowTitle = true
-})
-
-ThemeTab:BuildThemeSection()
 
 local ConfigTab = Window:CreateTab({
-        Name = "Config Tab",
+        Name = "Config",
         Icon = "settings",
         ImageSource = "Material",
         ShowTitle = true
