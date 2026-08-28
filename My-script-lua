@@ -3,8 +3,8 @@ local SaveManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.
 local InterfaceManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
  
 local Window = Library:CreateWindow{
-    Title = `Fluent {Library.Version}`,
-    SubTitle = "by Actual Master Oogway",
+    Title = `padang Hub`,
+    SubTitle = "by R.O",
     TabWidth = 160,
     Size = UDim2.fromOffset(830, 525),
     Resize = true, 
@@ -13,61 +13,44 @@ local Window = Library:CreateWindow{
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.RightControl 
 }
+
 -- =============================================================================
--- DRAGGABLE IMAGE TOGGLE BUTTON (ANTI-MACET & ANTI-BLOKIR TOTAL)
+-- CUSTOM DRAGGABLE IMAGE TOGGLE BUTTON (BERSIH DARI WARNING CORE GUI)
 -- =============================================================================
-local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local ContentProvider = game:GetService("ContentProvider")
 
--- 1. SOLUSI ANTI-BLOKIR: Mencari induk GUI Fluent yang asli agar tombol menempel di satu tempat aman
--- =============================================================================
--- DRAGGABLE IMAGE TOGGLE BUTTON (ANTI-MACET & ANTI-BLOKIR TOTAL)
--- =============================================================================
-local CoreGui = game:GetService("CoreGui")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local ContentProvider = game:GetService("ContentProvider")
+-- Mengambil PlayerGui (Sangat aman, legal, dan bebas dari pemblokiran CoreGui)
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- 1. SOLUSI ANTI-BLOKIR: Mencari induk GUI Fluent yang asli agar tombol menempel di satu tempat aman
-local FluentGui = CoreGui:FindFirstChild("Fluent") or game.Players.LocalPlayer.PlayerGui:FindFirstChild("Fluent")
+-- Membuat wadah UI mandiri di dalam PlayerGui pemain
+local ToggleGui = Instance.new("ScreenGui")
+ToggleGui.Name = "FluentModelToggleGui"
+ToggleGui.ResetOnSpawn = false
+ToggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ToggleGui.DisplayOrder = 999999 -- Memaksa tombol dirender paling depan di layar
+ToggleGui.Parent = PlayerGui
 
-local ToggleGui
-if FluentGui then
-    -- Jika Fluent ketemu, kita jadikan satu wadah agar tidak saling memblokir
-    ToggleGui = FluentGui
-else
-    -- Jika tidak ketemu (fallback), buat ScreenGui baru dengan prioritas render paling atas
-    ToggleGui = Instance.new("ScreenGui")
-    ToggleGui.Name = "FluentToggleGui"
-    ToggleGui.ResetOnSpawn = false
-    ToggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ToggleGui.DisplayOrder = 999999
-    
-    if syn and syn.protect_gui then syn.protect_gui(ToggleGui) ToggleGui.Parent = CoreGui
-    elseif getgui then ToggleGui.Parent = getgui()
-    else ToggleGui.Parent = CoreGui end
-end
-
--- 2. MEMBUAT TOMBOL DENGAN TINGKAT LAPISAN TERTINGGI (ZIndex Maksimal)
+-- Membuat Tombol Kotak Sempurna Kecil (45x45 pixel)
 local ToggleButton = Instance.new("ImageButton")
-ToggleButton.Name = "CustomToggleButton"
+ToggleButton.Name = "ModelButton"
 ToggleButton.Parent = ToggleGui
 ToggleButton.Size = UDim2.fromOffset(45, 45) 
-ToggleButton.Position = UDim2.new(0.05, 0, 0.2, 0) 
-ToggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35) 
+ToggleButton.Position = UDim2.new(0.05, 0, 0.25, 0) 
+ToggleButton.BackgroundColor3 = Color3.fromRGB(35, 35, 40) 
 ToggleButton.BorderSizePixel = 0
 ToggleButton.AutoButtonColor = true
 ToggleButton.ClipsDescendants = false 
-ToggleButton.ZIndex = 9999999 -- Dipaksa berada di lapisan paling luar/atas layar
+ToggleButton.ZIndex = 9999999 -- Lapisan ZIndex tertinggi agar tidak tertutup objek game
 
--- 3. SOLUSI ANTI-MACET: Menggunakan ID Gambar universal & memaksa pra-pemuatan (Preload)
--- Jika rbxassetid macet, format alternatif "https://roblox.com" bisa dicoba
-local imageId = "rbxassetid://10617300131" 
+-- SILAHKAN GANTI ID DI BAWAH INI DENGAN ASSET/IMAGE ID ROBLOX PILIHANMU
+local imageId = "rbxassetid://110268165079839" 
 ToggleButton.Image = imageId
 
--- Memaksa engine game untuk mengunduh gambar sekarang juga agar tidak stuck/transparan
+-- Pra-pemuatan paksa (Preload) agar aset gambar tidak macet/transparan saat di-inject
 task.spawn(function()
     pcall(function()
         ContentProvider:PreloadAsync({ToggleButton})
@@ -79,11 +62,11 @@ UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = ToggleButton
 
 local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(80, 80, 90) -- Garis tepi diperterang agar terlihat jika background gelap
-UIStroke.Thickness = 1.8
+UIStroke.Color = Color3.fromRGB(85, 85, 95)
+UIStroke.Thickness = 1.5
 UIStroke.Parent = ToggleButton
 
--- Fungsi Fitur Drag (Bisa Digeser)
+-- Fungsi Sistem Seret / Drag Button (Mulus menggunakan Tween)
 local dragging, dragInput, dragStart, startPos
 local function update(input)
     local delta = input.Position - dragStart
@@ -113,27 +96,24 @@ UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then update(input) end
 end)
 
--- Fungsi Klik Buka-Tutup Aman
+-- Fungsi Klik Buka-Tutup Menggunakan Jalur Alternatif Aman
 ToggleButton.MouseButton1Click:Connect(function()
     ToggleButton:TweenSize(UDim2.fromOffset(38, 38), "Out", "Quad", 0.08, true, function()
         ToggleButton:TweenSize(UDim2.fromOffset(45, 45), "Out", "Quad", 0.08, true)
     end)
     
-    -- Memastikan pencarian ulang kontainer utama agar akurat saat dieksekusi berkali-kali
-    local TargetGui = CoreGui:FindFirstChild("Fluent") or game.Players.LocalPlayer.PlayerGui:FindFirstChild("Fluent")
-    if TargetGui then
-        TargetGui.Enabled = not TargetGui.Enabled
+    -- Mencari UI utama Fluent di PlayerGui terlebih dahulu untuk menghindari interaksi CoreGui
+    local MainFluent = PlayerGui:FindFirstChild("Fluent") or game:GetService("CoreGui"):FindFirstChild("Fluent")
+    if MainFluent then
+        MainFluent.Enabled = not MainFluent.Enabled
     else
+        -- Cadangan jika struktur pencarian objek langsung tidak merespon
         Window:Minimize()
     end
 end)
 
 Library.OnUnload(function()
-    if ToggleGui.Name == "FluentToggleGui" then
-        ToggleGui:Destroy()
-    else
-        ToggleButton:Destroy()
-    end
+    ToggleGui:Destroy()
 end)
 -- =============================================================================
 
