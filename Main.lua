@@ -8,8 +8,8 @@ local Window = Luna:CreateWindow({
 	LoadingTitle = "welcome back", 
 	LoadingSubtitle = "by R.O", 
 
-	ConfigSettings = {
-		RootFolder = nil, 
+		ConfigSettings = {
+		RootFolder = "ColzHubData", 
 		ConfigFolder = "Big Hub" 
 	},
 
@@ -18,16 +18,18 @@ local Window = Luna:CreateWindow({
 		Title = "CLZ Key",
 		Subtitle = "Key System",
 		Note = "This script no key but you need a complete linkvertise first",
-		SaveInRoot = false, 
+		
+		-- UBAH MENJADI 'true' AGAR KUNCI DISIMPAN DI DALAM ROOT FOLDER DI ATAS
+		SaveInRoot = true, 
+		
 		SaveKey = true, 
 		Key = {"FREEPERMKEY_?G=dyi2fha$@Gcn7"}, 
 		SecondAction = {
 			Enabled = true, 
 			Type = "Link", 
-			Parameter = "https://link-target.net/8760278/VE5HlA1QgkWi" 
+			Parameter = "https://link-target.net" 
 		}
 	}
-})
 
 Window:CreateHomeTab({
         SupportedExecutors = {
