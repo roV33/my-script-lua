@@ -1,33 +1,32 @@
---[[https://github.com/Nebula-Softworks/Luna-Interface-Suite/blob/main/Documentation.md]]
 local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
 
 local Window = Luna:CreateWindow({
-        Name = "Luna Example Window", -- This Is Title Of Your Window
-        Subtitle = "A Gray Subtitle", -- A Gray Subtitle next To the main title.
-        LogoID = "82795327169782", -- The Asset ID of your logo. Set to nil if you do not have a logo for Luna to use.
-        LoadingEnabled = true, -- Whether to enable the loading animation. Set to false if you do not want the loading screen or have your own custom one.
-        LoadingTitle = "Luna Interface Suite", -- Header for loading screen
-        LoadingSubtitle = "by Nebula Softworks", -- Subtitle for loading screen
+	Name = "Colz Hub", -- This Is Title Of Your Window
+	Subtitle = "-Blox Fruit", -- A Gray Subtitle next To the main title.
+	LogoID = "82795327169782", -- The Asset ID of your logo. Set to nil if you do not have a logo for Luna to use.
+	LoadingEnabled = true, -- Whether to enable the loading animation. Set to false if you do not want the loading screen or have your own custom one.
+	LoadingTitle = "welcome back", -- Header for loading screen
+	LoadingSubtitle = "by R.O", -- Subtitle for loading screen
 
-        ConfigSettings = {
-                RootFolder = nil, -- The Root Folder Is Only If You Have A Hub With Multiple Game Scripts and u may remove it. DO NOT ADD A SLASH
-                ConfigFolder = "Big Hub" -- The Name Of The Folder Where Luna Will Store Configs For This Script. DO NOT ADD A SLASH
-        },
+	ConfigSettings = {
+		RootFolder = nil, -- The Root Folder Is Only If You Have A Hub With Multiple Game Scripts and u may remove it. DO NOT ADD A SLASH
+		ConfigFolder = "Big Hub" -- The Name Of The Folder Where Luna Will Store Configs For This Script. DO NOT ADD A SLASH
+	},
 
-        KeySystem = true, -- As Of Beta 6, Luna Has officially Implemented A Key System!
-        KeySettings = {
-                Title = "Key",
-                Subtitle = "Key System",
-                Note = "This script no key but you need a complete linkvertise for get perm key!",
-                SaveInRoot = false, -- Enabling will save the key in your RootFolder (YOU MUST HAVE ONE BEFORE ENABLING THIS OPTION)
-                SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-                Key = {"FREEPERMKEY_?G=dyi2fha$@Gcn7"},
-                SecondAction = {
-                        Enabled = true,
-                        Type = "Link", -- You can also put discord as an option, if your are doing that, don’t include discord.gg as Luna will auto add it as a prefix, just replace it with your identifier, example, if your are doing discord.gg/mspaint, just use mspaint.
-                        Parameter = "https://link-target.net/8760278/VE5HlA1QgkWi"
-                }
-        }
+	KeySystem = true, -- As Of Beta 6, Luna Has officially Implemented A Key System!
+	KeySettings = {
+		Title = "CLZ Key",
+		Subtitle = "Key System",
+		Note = "This script no key but you need a complete linkvertise first",
+		SaveInRoot = false, -- Enabling will save the key in your RootFolder (YOU MUST HAVE ONE BEFORE ENABLING THIS OPTION)
+		SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+		Key = {"FREEPERMKEY_?G=dyi2fha$@Gcn7"}, -- List of keys that will be accepted by the system, please use a system like Pelican or Luarmor that provide key strings based on your HWID since putting a simple string is very easy to bypass
+		SecondAction = {
+			Enabled = true, -- Set to false if you do not want a second action,
+			Type = "Link", -- Link / Discord.
+			Parameter = "https://link-target.net/8760278/VE5HlA1QgkWi" -- If Type is Discord, then put your invite link (DO NOT PUT DISCORD.GG/). Else, put the full link of your key system here.
+		}
+	}
 })
 
 Window:CreateHomeTab({
@@ -142,15 +141,3 @@ local Toggle = Tab:CreateToggle({
        	 -- The variable (Value) is a boolean on whether the toggle is true or false
     	end
 }, "Toggle") -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-
-Tab:CreateSection("COOMING SOON")
-Tab:CreateDivider()
-
-local ConfigTab = Window:CreateTab({
-        Name = "Config",
-        Icon = "settings",
-        ImageSource = "Material",
-        ShowTitle = true
-})
-
-ConfigTab:BuildConfigSection()
