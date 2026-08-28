@@ -1,58 +1,63 @@
-local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
+-- =============================================================================
+-- [ 1. MEMUAT LIBRARY LUNA INTERFACE SUITE ] - Perbaikan argumen HttpGet
+-- =============================================================================
+local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua"))()
 
 local Window = Luna:CreateWindow({
-	Name = "Colz Hub", -- This Is Title Of Your Window
-	Subtitle = "-Blox Fruit", -- A Gray Subtitle next To the main title.
-	LogoID = "82795327169782", -- The Asset ID of your logo. Set to nil if you do not have a logo for Luna to use.
-	LoadingEnabled = true, -- Whether to enable the loading animation. Set to false if you do not want the loading screen or have your own custom one.
-	LoadingTitle = "welcome back", -- Header for loading screen
-	LoadingSubtitle = "by R.O", -- Subtitle for loading screen
+	Name = "Colz Hub", 
+	Subtitle = "-Blox Fruit", 
+	LogoID = "82795327169782", 
+	LoadingEnabled = true, 
+	LoadingTitle = "welcome back", 
+	LoadingSubtitle = "by R.O", 
 
 	ConfigSettings = {
-		RootFolder = nil, -- The Root Folder Is Only If You Have A Hub With Multiple Game Scripts and u may remove it. DO NOT ADD A SLASH
-		ConfigFolder = "Big Hub" -- The Name Of The Folder Where Luna Will Store Configs For This Script. DO NOT ADD A SLASH
+		RootFolder = nil, 
+		ConfigFolder = "Big Hub" 
 	},
 
-	KeySystem = true, -- As Of Beta 6, Luna Has officially Implemented A Key System!
+	KeySystem = true, 
 	KeySettings = {
 		Title = "CLZ Key",
 		Subtitle = "Key System",
 		Note = "This script no key but you need a complete linkvertise first",
-		SaveInRoot = false, -- Enabling will save the key in your RootFolder (YOU MUST HAVE ONE BEFORE ENABLING THIS OPTION)
-		SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-		Key = {"FREEPERMKEY_?G=dyi2fha$@Gcn7"}, -- List of keys that will be accepted by the system, please use a system like Pelican or Luarmor that provide key strings based on your HWID since putting a simple string is very easy to bypass
+		SaveInRoot = false, 
+		SaveKey = true, 
+		Key = {"FREEPERMKEY_?G=dyi2fha$@Gcn7"}, 
 		SecondAction = {
-			Enabled = true, -- Set to false if you do not want a second action,
-			Type = "Link", -- Link / Discord.
-			Parameter = "https://link-target.net/8760278/VE5HlA1QgkWi" -- If Type is Discord, then put your invite link (DO NOT PUT DISCORD.GG/). Else, put the full link of your key system here.
+			Enabled = true, 
+			Type = "Link", 
+			Parameter = "https://link-target.net/8760278/VE5HlA1QgkWi" 
 		}
 	}
 })
 
+-- =============================================================================
+-- [ 2. PEMBUATAN HOME TAB & DISCORD ]
+-- =============================================================================
 Window:CreateHomeTab({
         SupportedExecutors = {
-                "Synapse X",
-                "Krnl",
-                "ProtoSmasher",
-                "Fluxus",
-                "Script-Ware",
-                "EasyExploits",
-                "Electron",
-                "JJSploit",
-                "Calamari",
-                "SirHurt",
-                "Sentinel",
-                "WEAREDEVS",
-                "Comet",
-                "Cellery",
-                "Wave",
-                "CODex",
-                "Delta"
+                "Synapse X", "Krnl", "ProtoSmasher", "Fluxus", "Script-Ware",
+                "EasyExploits", "Electron", "JJSploit", "Calamari", "SirHurt",
+                "Sentinel", "WEAREDEVS", "Comet", "Cellery", "Wave", "CODex", "Delta"
         },
-        DiscordInvite = "https://discord.gg/NjajtTbMK", -- same thing here
+        DiscordInvite = "https://discord.gg/NjajtTbMK", 
         Icon = 1
 })
 
+-- =============================================================================
+-- [ 3. NOTIFIKASI SELAMAT DATANG ] - Perbaikan tanda kurung penutup })
+-- =============================================================================
+Luna:Notification({
+        Title = "Notification",
+        Icon = "notifications_active",
+        ImageSource = "Material",
+        Content = "Thanks for using my script"
+})
+
+-- =============================================================================
+-- [ 4. PEMBUATAN HALAMAN TAB UTAMA ]
+-- =============================================================================
 local Tab = Window:CreateTab({
         Name = "Tab Example",
         Icon = "view_in_ar",
@@ -60,27 +65,21 @@ local Tab = Window:CreateTab({
         ShowTitle = true
 })
 
-Luna:Notification({
-        Title = "Notification",
-        Icon = "notifications_active",
-        ImageSource = "Material",
-        Content = "Thanks for using my script", 
-
 Tab:CreateSection("main")  
 
--- A. MEMBUAT DROPDOWN PILIHAN SENJATA DI LUNA UI
+-- A. Dropdown Pilihan Senjata
 local WeaponDropdown = Tab:CreateDropdown({
     Name = "Pilih Senjata Farm",
     Description = nil,
     Options = {"Melee", "Sword", "Fruit"},
-    CurrentOption = "Melee", -- Bawaan awal memilih Melee
+    CurrentOption = "Melee", 
     Callback = function(Option)
-        _G.SenjataFarm = Option -- Mengubah target tipe senjata secara langsung saat diklik
+        _G.SenjataFarm = Option 
         print("Senjata farm diganti menjadi: " .. Option)
     end
 })
 
--- B. MEMBUAT SAKELAR TOGGLE AUTO FARM
+-- B. Sakelar Toggle Auto Farm
 local ToggleBlox = Tab:CreateToggle({
     Name = "Auto Farm + Kill Aura (Blox Fruits)",
     Description = "Otomatis ganti senjata pilihan dropdown + Flight Anchor",
@@ -89,9 +88,14 @@ local ToggleBlox = Tab:CreateToggle({
         _G.AutoFarmBloxFruits = State 
         
         if State then
-            jalankanFarmBlox() 
+            -- Memastikan fungsi pembantu dipanggil dengan aman jika sudah dideklarasikan di bawah
+            if jalankanFarmBlox then
+                jalankanFarmBlox()
+            else
+                print("Peringatan: Fungsi logika 'jalankanFarmBlox' belum dipasang di bawah skrip UI!")
+            end
         else
-            local character = player.Character
+            local character = game:GetService("Players").LocalPlayer.Character
             local rootPart = character and character:FindFirstChild("HumanoidRootPart")
             if rootPart then rootPart.Anchored = false end
         end
@@ -100,44 +104,56 @@ local ToggleBlox = Tab:CreateToggle({
 
 Tab:CreateSection("ches farm")
 
-local Toggle = Tab:CreateToggle({
+local ToggleChes = Tab:CreateToggle({
 	Name = "farm ches",
 	Description = nil,
 	CurrentValue = false,
     	Callback = function(Value)
-       	 -- The function that takes place when the toggle is switched
-       	 -- The variable (Value) is a boolean on whether the toggle is true or false
+       	    _G.FarmChestActive = Value
     	end
-}, "Toggle") -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+}, "ToggleChest") 
 
 Tab:CreateSection("bone")
 
-local Toggle = Tab:CreateToggle({
+local ToggleBone = Tab:CreateToggle({
 	Name = "farm bone",
 	Description = nil,
 	CurrentValue = false,
     	Callback = function(Value)
-       	 -- The function that takes place when the toggle is switched
-       	 -- The variable (Value) is a boolean on whether the toggle is true or false
+       	    _G.FarmBoneActive = Value
     	end
-}, "Toggle") -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+}, "ToggleBone") 
 
-local Tab = Window:CreateTab({
+-- =============================================================================
+-- [ 5. PEMBUATAN TAB AUTO GET ITEM ]
+-- =============================================================================
+local TabItem = Window:CreateTab({
 	Name = "auto get item",
 	Icon = "robot",
 	ImageSource = "Material",
-	ShowTitle = true -- This will determine whether the big header text in the tab will show
+	ShowTitle = true 
 })
 
-Tab:CreateSection("CDK")
-Tab:CreateDivider()
+TabItem:CreateSection("CDK")
+TabItem:CreateDivider()
 
-local Toggle = Tab:CreateToggle({
+local ToggleTushita = TabItem:CreateToggle({
 	Name = "auto tushita",
 	Description = "get tushita",
 	CurrentValue = false,
     	Callback = function(Value)
-       	 -- The function that takes place when the toggle is switched
-       	 -- The variable (Value) is a boolean on whether the toggle is true or false
+       	    _G.AutoTushitaActive = Value
     	end
-}, "Toggle") -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+}, "ToggleTushita")
+
+
+-- =============================================================================
+-- [ 6. TEMPAT MENARUH KODE FITUR LOGIKA / BACKEND ] - Berada di Paling Bawah
+-- =============================================================================
+
+function jalankanFarmBlox()
+    -- Masukkan semua loop task.spawn() pergerakan, tween, auto quest, 
+    -- dan remote attack m1 Anda di area bawah sini agar bisa membaca variabel 
+    -- _G.AutoFarmBloxFruits dan _G.SenjataFarm dari UI di atas dengan lancar.
+    print("Mesin Logika Auto Farm Berhasil Dipicu!")
+end
