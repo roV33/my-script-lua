@@ -1,6 +1,3 @@
--- =============================================================================
--- [ 1. MEMUAT LIBRARY LUNA INTERFACE SUITE ] - Perbaikan argumen HttpGet
--- =============================================================================
 local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua"))()
 
 local Window = Luna:CreateWindow({
@@ -32,9 +29,6 @@ local Window = Luna:CreateWindow({
 	}
 })
 
--- =============================================================================
--- [ 2. PEMBUATAN HOME TAB & DISCORD ]
--- =============================================================================
 Window:CreateHomeTab({
         SupportedExecutors = {
                 "Synapse X", "Krnl", "ProtoSmasher", "Fluxus", "Script-Ware",
@@ -45,9 +39,6 @@ Window:CreateHomeTab({
         Icon = 1
 })
 
--- =============================================================================
--- [ 3. NOTIFIKASI SELAMAT DATANG ] - Perbaikan tanda kurung penutup })
--- =============================================================================
 Luna:Notification({
         Title = "Notification",
         Icon = "notifications_active",
@@ -55,9 +46,6 @@ Luna:Notification({
         Content = "Thanks for using my script"
 })
 
--- =============================================================================
--- [ 4. PEMBUATAN HALAMAN TAB UTAMA ]
--- =============================================================================
 local Tab = Window:CreateTab({
         Name = "Tab Example",
         Icon = "view_in_ar",
@@ -124,12 +112,9 @@ local ToggleBone = Tab:CreateToggle({
     	end
 }, "ToggleBone") 
 
--- =============================================================================
--- [ 5. PEMBUATAN TAB AUTO GET ITEM ]
--- =============================================================================
-local TabItem = Window:CreateTab({
+local Tab = Window:CreateTab({
 	Name = "auto get item",
-	Icon = "robot",
+	Icon = "bot-message-square",
 	ImageSource = "Material",
 	ShowTitle = true 
 })
@@ -146,10 +131,6 @@ local ToggleTushita = TabItem:CreateToggle({
     	end
 }, "ToggleTushita")
 
-
--- =============================================================================
--- [ 6. TEMPAT MENARUH KODE FITUR LOGIKA / BACKEND ] - Berada di Paling Bawah
--- =============================================================================
 
 function jalankanFarmBlox()
     -- Masukkan semua loop task.spawn() pergerakan, tween, auto quest, 
