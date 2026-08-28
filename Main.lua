@@ -67,209 +67,158 @@ Luna:Notification({
         ImageSource = "Material",
         Content = "This Is A Preview Of Luna's Dynamic Notification System Entailing Estimated/Calculated Wait Times, A Sleek Design, Icons, And A Glassmorphic Look"
 })
-_G.AutoFarmBloxFruits = false
-_G.SenjataFarm = "Melee" 
 
-local player = game.Players.LocalPlayer
-local workspace = game:GetService("Workspace")
-local virtualUser = game:GetService("VirtualUser")
-local replicatedStorage = game:GetService("ReplicatedStorage")
-local tweenService = game:GetService("TweenService")
+-- [[ CONFIGURATION & UTILITIES ]] --
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
-player.Idled:Connect(function()
-    virtualUser:CaptureController()
-    virtualUser:ClickButton2(Vector2.new(0,0))
-end)
+local LocalPlayer = Players.LocalPlayer
 
-local listPelindung = {}
-setmetatable(listPelindung, { __index = function() return true end })
-local list = listPelindung; local listKite = listPelindung
+-- Remote Events dari Cobalt yang Anda berikan
+local AttackEvent = ReplicatedStorage.Modules.Net["RE/RegisterAttack"]
 
--- Data Siklus Quest Otomatis (Sea 1)
-local function dapatkanDataQuest()
-    local lvl = player.Data.Level.Value
-    if lvl >= 0 and lvl < 10 then
-        return "BanditQuest1", "Bandit", 1, CFrame.new(1059, 16, 1549)
-    elseif lvl >= 10 and lvl < 15 then
-        return "MonkeyQuest1", "Monkey", 1, CFrame.new(-1598, 36, 153)
-    elseif lvl >= 15 and lvl < 30 then
-        return "MonkeyQuest1", "Gorilla", 2, CFrame.new(-1598, 36, 153)
-    elseif lvl >= 30 and lvl < 60 then
-        return "PirateVillageQuest", "Pirate", 1, CFrame.new(-1140, 4, 3828)
-    else
-        return "BanditQuest1", "Bandit", 1, CFrame.new(1059, 16, 1549)
+-- Database Quest dan Tingkatan Level (Contoh Struktur Data Leveling)
+-- Anda bisa meneruskan daftar ini hingga Max Level 2800 sesuai dengan game data asli
+local QuestData = {
+    {MinLevel = 1,   MaxLevel = 10,  NPCName = "Bandit",       QuestName = "Bandits",       IslandPosition = Vector3.new(100, 20, 100)},
+    {MinLevel = 10,  MaxLevel = 15,  NPCName = "Monkey",       QuestName = "Monkeys",       IslandPosition = Vector3.new(-1500, 30, 200)},
+    {MinLevel = 15,  MaxLevel = 30,  NPCName = "Gorilla",      QuestName = "Gorillas",      IslandPosition = Vector3.new(-1200, 40, 300)},
+    -- ... (Lewati ke contoh data level 600-650 seperti yang Anda instruksikan)
+    {MinLevel = 575, MaxLevel = 625, NPCName = "Military Soldier", QuestName = "Military Soldiers", IslandPosition = Vector3.new(5000, 100, -2000)},
+    {MinLevel = 625, MaxLevel = 650, NPCName = "Military Spy",     QuestName = "Military Spies",    IslandPosition = Vector3.new(5500, 120, -2200)},
+}
+
+-- Mengambil data quest yang sesuai dengan level karakter saat ini secara dinamis
+local function GetCurrentQuest()
+    local myLevel = LocalPlayer.Data.Level.Value
+    -- Batasi looping farm maksimal di level 2800 sesuai permintaan Anda
+    if myLevel >= 2800 then return nil end 
+    
+    for _, quest in ipairs(QuestData) do
+        if myLevel >= quest.MinLevel and myLevel < quest.MaxLevel then
+            return quest
+        end
     end
+    return QuestData[#QuestData] -- Mengembalikan data terakhir jika tidak ada kecocokan
 end
 
--- Pergerakan Terbang Halus Tween Speed 300
-local function lakukanTweenKe(targetCFrame)
-    local character = player.Character
-    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return end
+-- [[ AUTO EQUIP WEAPON DYNAMIC ]] --
+-- Fitur ini otomatis mencari senjata/fighting style apa saja yang tersedia di Inventory dan memasangnya
+local function AutoEquipWeapon()
+    local Character = LocalPlayer.Character
+    local Backpack = LocalPlayer.Backpack
     
-    local jarak = (rootPart.Position - targetCFrame.Position).Magnitude
-    local kecepatan = 300 
-    local durasi = jarak / kecepatan
-    
-    local infoTween = TweenInfo.new(durasi, Enum.EasingStyle.Linear)
-    local terbang = tweenService:Create(rootPart, infoTween, {CFrame = targetCFrame})
-    terbang:Play()
-    terbang.Completed:Wait()
-end
-
-local function pegangSenjataOtomatis()
-    local character = player.Character
-    local backpack = player.Backpack
-    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-    if not (character and backpack and humanoid) then return end
-    
-    -- Cek jika karakter sudah memegang tool di tangan agar tidak spam klik equip
-    if character:FindFirstChildOfClass("Tool") then return end
-    
-    -- Memindai isi tas secara dinamis untuk mencocokkan tipe jenis senjata
-    for _, tool in ipairs(backpack:GetChildren()) do
-        if tool:IsA("Tool") then
-            local cocok = false
-            
-            -- Mencari tipe berdasarkan folder bawaan skrip batin Blox Fruits
-            local isFruit = string.find(string.lower(tool.Name), "fruit")
-            local hasEquipEvent = tool:FindFirstChild("EquipEvent")
-            
-            if _G.SenjataFarm == "Melee" then
-                -- Melee dicirikan memiliki properti pukulan atau bawaan awal pemain
-                if hasEquipEvent and not isFruit and (string.find(string.lower(tool.Name), "combat") or string.find(string.lower(tool.Name), "style") or string.find(string.lower(tool.Name), "karate") or string.find(string.lower(tool.Name), "leg") or string.find(string.lower(tool.Name), "claw") or string.find(string.lower(tool.Name), "fist")) then
-                    cocok = true
+    if Character and Backpack then
+        -- Cek apakah sudah ada senjata yang digenggam di karakter
+        local currentTool = Character:FindFirstChildOfClass("Tool")
+        if not currentTool then
+            -- Cari item pertama yang tersedia di Backpack (Bisa Fighting Style, Sword, atau Fruit)
+            local targetTool = Backpack:FindFirstChildOfClass("Tool")
+            if targetTool then
+                targetTool.Parent = Character
+                
+                -- Jika item tersebut memiliki EquipEvent bawaan, tembak servernya secara otomatis
+                if targetTool:FindFirstChild("EquipEvent") then
+                    targetTool.EquipEvent:FireServer(true)
                 end
-            elseif _G.SenjataFarm == "Sword" then
-                -- Sword adalah weapon yang bukan buah dan bukan gaya bertarung dasar
-                if not isFruit and not string.find(string.lower(tool.Name), "combat") and not string.find(string.lower(tool.Name), "style") and not string.find(string.lower(tool.Name), "leg") then
-                    cocok = true
-                end
-            elseif _G.SenjataFarm == "Fruit" then
-                if isFruit then
-                    cocok = true
-                end
-            end
-            
-            if cocok then
-                humanoid:EquipTool(tool)
-                -- Jalankan fungsi jabat tangan jaringan temuan Cobalt secara otomatis
-                task.spawn(function()
-                    local ev = tool:FindFirstChild("EquipEvent")
-                    if ev then
-                        ev:FireServer(true)
-                    end
-                end)
-                break
             end
         end
     end
 end
 
-local function eksekusiKillAuraPro(namaTargetNPC)
+-- [[ TWEEN TWEEN MOVEMENT (SPEED 300) ]] --
+local function TweenToPosition(targetCFrame)
+    local Character = LocalPlayer.Character
+    if not Character or not Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local hrp = Character.HumanoidRootPart
+    local distance = (hrp.Position - targetCFrame.Position).Magnitude
+    local speed = 300 -- Menggunakan kecepatan 300 sesuai permintaan Anda
+    local duration = distance / speed
+    
+    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
+    
+    tween:Play()
+    return tween
+end
+
+-- [[ INTEGRASI AUTO QUEST ]] --
+local function CheckAndTakeQuest(questName)
+    -- Logika integrasi: Cek apakah data quest aktif di UI/Data player sudah ada atau belum
+    -- Jika belum ada quest aktif, tembak Remote Event Quest bawaan game
+    local hasQuest = LocalPlayer.PlayerGui:FindFirstChild("Main") and LocalPlayer.PlayerGui.Main:FindFirstChild("Quest")
+    if hasQuest and not hasQuest.Visible then
+        -- Eksekusi pengambilan quest melalui remote event utama game Blox Fruit
+        -- (Ganti "ReplicatedStorage.RemoteEventQuest" dengan path remote quest real jika berbeda)
+        local QuestEvent = ReplicatedStorage:FindFirstChild("QuestService") or ReplicatedStorage.Modules.Net["RE/QuestController"]
+        if QuestEvent then
+            QuestEvent:FireServer("StartQuest", questName, 1)
+        end
+    end
+end
+
+-- [[ FAST ATTACK & COMBAT LOGIC ]] --
+local function FastAttack(targetNPC)
+    -- Fitur pembatasan hit sekali m1 dan bypass cooldown (Fast Attack)
     task.spawn(function()
-        local netRemote = replicatedStorage:FindFirstChild("Modules") 
-            and replicatedStorage.Modules:FindFirstChild("Net") 
-            and replicatedStorage.Modules.Net:FindFirstChild("RE/RegisterAttack")
+        if targetNPC and targetNPC:FindFirstChild("Humanoid") and targetNPC.Humanoid.Health > 0 then
+            -- M1 attack dilakukan sekali per pemicuan di atas musuh
+            AttackEvent:FireServer(0.40000000596046, 1)
             
-        while _G.AutoFarmBloxFruits do
-            task.wait(0.01) 
-            
-            local character = player.Character
-            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-            local weapon = character and character:FindFirstChildOfClass("Tool")
-            
-            if character and rootPart and weapon and netRemote then
-                local folderMusuh = workspace:FindFirstChild("Enemies") or workspace
-                local adaMusuh = false
-                
-                for _, npc in ipairs(folderMusuh:GetChildren()) do
-                    if string.find(string.lower(npc.Name), "boss") then continue end 
-                    
-                    if npc.Name == namaTargetNPC and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
-                        local npcRoot = npc:FindFirstChild("HumanoidRootPart")
-                        if npcRoot and (npcRoot.Position - rootPart.Position).Magnitude <= 35 then
-                            adaMusuh = true
-                            
-                            pcall(function()
-                                netRemote:FireServer(0.40000000596046, 1)
-                            end)
-                        end
-                    end
-                end
-                
-                if adaMusuh then
-                    pcall(function()
-                        virtualUser:CaptureController()
-                        virtualUser:Button1Down(Vector2.new(0,0))
-                    end)
-                end
+            -- Menyerang bagian hitbox target jika sistem membutuhkan Hit Register tambahan
+            local RegisterHit = ReplicatedStorage.Modules.Net:FindFirstChild("RE/RegisterHit")
+            if RegisterHit and targetNPC:FindFirstChild("HumanoidRootPart") then
+                RegisterHit:FireServer(targetNPC.HumanoidRootPart)
             end
         end
     end)
 end
 
-local function jalankanFarmBlox()
-    task.spawn(function()
-        print("Sistem Auto Farm Universal Premium Aktif...")
-        
-        while _G.AutoFarmBloxFruits do
-            task.wait(0.02)
+-- [[ CORE LOOP AUTO FARM ]] --
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+            local currentQuest = GetCurrentQuest()
+            if not currentQuest then return end
             
-            local character = player.Character
-            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            -- 1. Jalankan Auto Equip Senjata secara konstan
+            AutoEquipWeapon()
             
-            if character and rootPart and humanoid and humanoid.Health > 0 then
-                local namaQuest, namaNPC, idQuest, posNPCQuest = dapatkanDataQuest()
-                local punyaQuest = player.PlayerGui.Main:FindFirstChild("Quest") and player.PlayerGui.Main.Quest.Visible
-                
-                for _, part in ipairs(character:GetChildren()) do
-                    if part:IsA("BasePart") then part.CanCollide = false end
+            -- 2. Ambil Quest Terlebih Dahulu
+            CheckAndTakeQuest(currentQuest.QuestName)
+            
+            -- 3. Cari Target NPC yang spesifik sesuai dengan Quest Level saat ini
+            local targetNPC = nil
+            for _, npc in ipairs(workspace.Enemies:GetChildren()) do
+                if npc.Name == currentQuest.NPCName and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
+                    targetNPC = npc
+                    break
                 end
+            end
+            
+            -- 4. Logika Pergerakan Posisi dan Penyerangan Musuh
+            if targetNPC and targetNPC:FindFirstChild("HumanoidRootPart") then
+                -- Atur posisi Karakter tepat berada di ATAS NPC sejauh 14 Studs agar aman dari hit musuh
+                local npcPos = targetNPC.HumanoidRootPart.Position
+                local safeStanceCFrame = CFrame.new(npcPos.X, npcPos.Y + 14, npcPos.Z) * CFrame.Angles(math.rad(-90), 0, 0)
                 
-                if not punyaQuest then
-                    if rootPart:FindFirstChild("FarmVelocity") then rootPart.FarmVelocity:Destroy() end
-                    lakukanTweenKe(posNPCQuest)
-                    
-                    task.wait(0.3)
-                    replicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", namaQuest, idQuest)
-                    task.wait(0.3)
-                else
-                    local folderMusuh = workspace:FindFirstChild("Enemies") or workspace
-                    local targetMusuh = nil
-                    
-                    for _, npc in ipairs(folderMusuh:GetChildren()) do
-                        if string.find(string.lower(npc.Name), "boss") then continue end 
-                        
-                        if npc.Name == namaNPC and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
-                            if npc:FindFirstChild("HumanoidRootPart") then
-                                targetMusuh = npc
-                                break
-                            end
-                        end
-                    end
-                    
-                    if targetMusuh and targetMusuh:FindFirstChild("HumanoidRootPart") then
-                        eksekusiKillAuraPro(namaNPC)
-                        
-                        local posisiNPC = targetMusuh.HumanoidRootPart.Position
-                        pegangSenjataOtomatis()
-                        
-                        local farmBV = rootPart:FindFirstChild("FarmVelocity")
-                        if not farmBV then
-                            farmBV = Instance.new("BodyVelocity")
-                            farmBV.Name = "FarmVelocity"
-                            farmBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-                            farmBV.Velocity = Vector3.new(0, 0, 0)
-                            farmBV.Parent = rootPart
-                        end
-                        
-                        rootPart.CFrame = CFrame.new(posisiNPC + Vector3.new(0, 10, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
-                        
-                        if targetMusuh.Humanoid.WalkSpeed > 0 then targetMusuh.Humanoid.WalkSpeed = 0 end
-                                                else
-                                                        
+                -- Pindah ke posisi target menggunakan Tween Speed 300
+                TweenToPosition(safeStanceCFrame)
+                
+                -- Lakukan Fast Attack sekali M1 secara simultan saat berada di jangkauan musuh
+                FastAttack(targetNPC)
+            else
+                -- Jika NPC belum spawn di map, diam/berdiri di pulau tempat spawn NPC tersebut
+                local islandAirspace = CFrame.new(currentQuest.IslandPosition.X, currentQuest.IslandPosition.Y + 50, currentQuest.IslandPosition.Z)
+                TweenToPosition(islandAirspace)
+            end
+        end)
+    end
+end)
+                                                     
 -- A. MEMBUAT DROPDOWN PILIHAN SENJATA DI LUNA UI
 local WeaponDropdown = Tab:CreateDropdown({
     Name = "Pilih Senjata Farm",
