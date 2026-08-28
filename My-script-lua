@@ -1,10 +1,10 @@
-local Library = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
-local SaveManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
-local InterfaceManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
+local Library = loadstring(game:HttpGetAsync("https://github.com"))()()
+local SaveManager = loadstring(game:HttpGetAsync("https://githubusercontent.com"))()
+local InterfaceManager = loadstring(game:HttpGetAsync("https://githubusercontent.com"))()
  
 local Window = Library:CreateWindow{
-    Title = `padang Hub`,
-    SubTitle = "by R.O",
+    Title = "Padang Hub",
+    SubTitle = "by Actual Master Oogway",
     TabWidth = 160,
     Size = UDim2.fromOffset(830, 525),
     Resize = true, 
@@ -15,23 +15,22 @@ local Window = Library:CreateWindow{
 }
 
 -- =============================================================================
--- CUSTOM DRAGGABLE IMAGE TOGGLE BUTTON (BERSIH DARI WARNING CORE GUI)
+-- CUSTOM DRAGGABLE IMAGE TOGGLE BUTTON (METODE AMAN BAWAAN FLUENT)
 -- =============================================================================
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local ContentProvider = game:GetService("ContentProvider")
 
--- Mengambil PlayerGui (Sangat aman, legal, dan bebas dari pemblokiran CoreGui)
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Membuat wadah UI mandiri di dalam PlayerGui pemain
+-- Membuat wadah UI mandiri di PlayerGui agar terhindar dari error CoreGui
 local ToggleGui = Instance.new("ScreenGui")
 ToggleGui.Name = "FluentModelToggleGui"
 ToggleGui.ResetOnSpawn = false
 ToggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ToggleGui.DisplayOrder = 999999 -- Memaksa tombol dirender paling depan di layar
+ToggleGui.DisplayOrder = 999999 
 ToggleGui.Parent = PlayerGui
 
 -- Membuat Tombol Kotak Sempurna Kecil (45x45 pixel)
@@ -44,13 +43,13 @@ ToggleButton.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
 ToggleButton.BorderSizePixel = 0
 ToggleButton.AutoButtonColor = true
 ToggleButton.ClipsDescendants = false 
-ToggleButton.ZIndex = 9999999 -- Lapisan ZIndex tertinggi agar tidak tertutup objek game
+ToggleButton.ZIndex = 9999999 
 
 -- SILAHKAN GANTI ID DI BAWAH INI DENGAN ASSET/IMAGE ID ROBLOX PILIHANMU
 local imageId = "rbxassetid://110268165079839" 
 ToggleButton.Image = imageId
 
--- Pra-pemuatan paksa (Preload) agar aset gambar tidak macet/transparan saat di-inject
+-- Pra-pemuatan paksa (Preload) agar asset gambar tidak macet/transparan saat di-inject
 task.spawn(function()
     pcall(function()
         ContentProvider:PreloadAsync({ToggleButton})
@@ -96,20 +95,14 @@ UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then update(input) end
 end)
 
--- Fungsi Klik Buka-Tutup Menggunakan Jalur Alternatif Aman
+-- Fungsi Klik Buka-Tutup Menggunakan Fungsi Asli Library Fluent (Anti-Macet)
 ToggleButton.MouseButton1Click:Connect(function()
     ToggleButton:TweenSize(UDim2.fromOffset(38, 38), "Out", "Quad", 0.08, true, function()
         ToggleButton:TweenSize(UDim2.fromOffset(45, 45), "Out", "Quad", 0.08, true)
     end)
     
-    -- Mencari UI utama Fluent di PlayerGui terlebih dahulu untuk menghindari interaksi CoreGui
-    local MainFluent = PlayerGui:FindFirstChild("Fluent") or game:GetService("CoreGui"):FindFirstChild("Fluent")
-    if MainFluent then
-        MainFluent.Enabled = not MainFluent.Enabled
-    else
-        -- Cadangan jika struktur pencarian objek langsung tidak merespon
-        Window:Minimize()
-    end
+    -- Menggunakan fungsi bawaan resmi Fluent untuk melakukan minimize window
+    Window:Minimize() -- [AMAN & ANTI-BLOKIR]
 end)
 
 Library.OnUnload(function()
@@ -326,4 +319,9 @@ local Input = Tabs.Main:CreateInput("Input", {
     Placeholder = "Placeholder",
     Numeric = false, 
     Finished = false, 
+    Callback = function(Value)
+        print("Input changed:", Value)
+    end
+})
 
+Input:OnChanged(function()
