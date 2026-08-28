@@ -1,0 +1,349 @@
+local Library = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local SaveManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
+local InterfaceManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
+ 
+local Window = Library:CreateWindow{
+    Title = `Fluent {Library.Version}`,
+    SubTitle = "by Actual Master Oogway",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(830, 525),
+    Resize = true, 
+    MinSize = Vector2.new(470, 380),
+    Acrylic = true, 
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.RightControl 
+}
+-- =============================================================================
+-- DRAGGABLE IMAGE TOGGLE BUTTON (ANTI-MACET & ANTI-BLOKIR TOTAL)
+-- =============================================================================
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local ContentProvider = game:GetService("ContentProvider")
+
+-- 1. SOLUSI ANTI-BLOKIR: Mencari induk GUI Fluent yang asli agar tombol menempel di satu tempat aman
+-- =============================================================================
+-- DRAGGABLE IMAGE TOGGLE BUTTON (ANTI-MACET & ANTI-BLOKIR TOTAL)
+-- =============================================================================
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local ContentProvider = game:GetService("ContentProvider")
+
+-- 1. SOLUSI ANTI-BLOKIR: Mencari induk GUI Fluent yang asli agar tombol menempel di satu tempat aman
+local FluentGui = CoreGui:FindFirstChild("Fluent") or game.Players.LocalPlayer.PlayerGui:FindFirstChild("Fluent")
+
+local ToggleGui
+if FluentGui then
+    -- Jika Fluent ketemu, kita jadikan satu wadah agar tidak saling memblokir
+    ToggleGui = FluentGui
+else
+    -- Jika tidak ketemu (fallback), buat ScreenGui baru dengan prioritas render paling atas
+    ToggleGui = Instance.new("ScreenGui")
+    ToggleGui.Name = "FluentToggleGui"
+    ToggleGui.ResetOnSpawn = false
+    ToggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ToggleGui.DisplayOrder = 999999
+    
+    if syn and syn.protect_gui then syn.protect_gui(ToggleGui) ToggleGui.Parent = CoreGui
+    elseif getgui then ToggleGui.Parent = getgui()
+    else ToggleGui.Parent = CoreGui end
+end
+
+-- 2. MEMBUAT TOMBOL DENGAN TINGKAT LAPISAN TERTINGGI (ZIndex Maksimal)
+local ToggleButton = Instance.new("ImageButton")
+ToggleButton.Name = "CustomToggleButton"
+ToggleButton.Parent = ToggleGui
+ToggleButton.Size = UDim2.fromOffset(45, 45) 
+ToggleButton.Position = UDim2.new(0.05, 0, 0.2, 0) 
+ToggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35) 
+ToggleButton.BorderSizePixel = 0
+ToggleButton.AutoButtonColor = true
+ToggleButton.ClipsDescendants = false 
+ToggleButton.ZIndex = 9999999 -- Dipaksa berada di lapisan paling luar/atas layar
+
+-- 3. SOLUSI ANTI-MACET: Menggunakan ID Gambar universal & memaksa pra-pemuatan (Preload)
+-- Jika rbxassetid macet, format alternatif "https://roblox.com" bisa dicoba
+local imageId = "rbxassetid://10617300131" 
+ToggleButton.Image = imageId
+
+-- Memaksa engine game untuk mengunduh gambar sekarang juga agar tidak stuck/transparan
+task.spawn(function()
+    pcall(function()
+        ContentProvider:PreloadAsync({ToggleButton})
+    end)
+end)
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = ToggleButton
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(80, 80, 90) -- Garis tepi diperterang agar terlihat jika background gelap
+UIStroke.Thickness = 1.8
+UIStroke.Parent = ToggleButton
+
+-- Fungsi Fitur Drag (Bisa Digeser)
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+    local delta = input.Position - dragStart
+    local targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    TweenService:Create(ToggleButton, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = targetPos}):Play()
+end
+
+ToggleButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleButton.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+
+ToggleButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then update(input) end
+end)
+
+-- Fungsi Klik Buka-Tutup Aman
+ToggleButton.MouseButton1Click:Connect(function()
+    ToggleButton:TweenSize(UDim2.fromOffset(38, 38), "Out", "Quad", 0.08, true, function()
+        ToggleButton:TweenSize(UDim2.fromOffset(45, 45), "Out", "Quad", 0.08, true)
+    end)
+    
+    -- Memastikan pencarian ulang kontainer utama agar akurat saat dieksekusi berkali-kali
+    local TargetGui = CoreGui:FindFirstChild("Fluent") or game.Players.LocalPlayer.PlayerGui:FindFirstChild("Fluent")
+    if TargetGui then
+        TargetGui.Enabled = not TargetGui.Enabled
+    else
+        Window:Minimize()
+    end
+end)
+
+Library.OnUnload(function()
+    if ToggleGui.Name == "FluentToggleGui" then
+        ToggleGui:Destroy()
+    else
+        ToggleButton:Destroy()
+    end
+end)
+-- =============================================================================
+
+-- Sisa isi script bawaan Fluent Renewed milikmu:
+local Tabs = {
+    Main = Window:CreateTab{
+        Title = "Main",
+        Icon = "phosphor-users-bold"
+    },
+    Settings = Window:CreateTab{
+        Title = "Settings",
+        Icon = "settings"
+    }
+}
+
+local Options = Library.Options
+
+Library:Notify{
+    Title = "Notification",
+    Content = "This is a notification",
+    SubContent = "SubContent", 
+    Duration = 5 
+}
+
+local Paragraph = Tabs.Main:CreateParagraph("Paragraph", {
+    Title = "Paragraph",
+    Content = "This is a paragraph.\nSecond line!"
+})
+
+print(Paragraph.Value)
+Paragraph:SetValue("This paragraph text is changed!")
+print(Paragraph.Value)
+
+Tabs.Main:CreateParagraph("Aligned Paragraph", {
+    Title = "Paragraph",
+    Content = "This is a paragraph with a center alignment!",
+    TitleAlignment = "Middle",
+    ContentAlignment = Enum.TextXAlignment.Center
+})
+
+Tabs.Main:CreateButton{
+    Title = "Button",
+    Description = "Very important button",
+    Callback = function()
+        Window:Dialog{
+            Title = "Title",
+            Content = "This is a dialog",
+            Buttons = {
+                {
+                    Title = "Confirm",
+                    Callback = function()
+                        print("Confirmed the dialog.")
+                    end
+                },
+                {
+                    Title = "Cancel",
+                    Callback = function()
+                        print("Cancelled the dialog.")
+                    end
+                }
+            }
+        }
+    end
+}
+
+local Toggle = Tabs.Main:CreateToggle("MyToggle", {Title = "Toggle", Default = false })
+
+Toggle:OnChanged(function()
+    print("Toggle changed:", Options.MyToggle.Value)
+end)
+
+Options.MyToggle:SetValue(false)
+
+local Slider = Tabs.Main:CreateSlider("Slider", {
+    Title = "Slider",
+    Description = "This is a slider",
+    Default = 2,
+    Min = 0,
+    Max = 5,
+    Rounding = 1,
+    Callback = function(Value)
+        print("Slider was changed:", Value)
+    end
+})
+
+Slider:OnChanged(function(Value)
+    print("Slider changed:", Value)
+end)
+
+Slider:SetValue(3)
+
+local Dropdown = Tabs.Main:CreateDropdown("Dropdown", {
+    Title = "Dropdown",
+    Values = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen"},
+    Multi = false,
+    Default = 1,
+})
+
+Dropdown:SetValue("four")
+
+Dropdown:OnChanged(function(Value)
+    print("Dropdown changed:", Value)
+end)
+
+local MultiDropdown = Tabs.Main:CreateDropdown("MultiDropdown", {
+    Title = "Dropdown",
+    Description = "You can select multiple values.",
+    Values = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen"},
+    Multi = true,
+    Default = {"seven", "twelve"},
+})
+
+MultiDropdown:SetValue{
+    three = true,
+    five = true,
+    seven = false
+}
+
+MultiDropdown:SetValues{"fifteen", "sixteen", "seventeen"}
+
+MultiDropdown:OnChanged(function(Value)
+    local Values = {}
+    for Value, State in next, Value do
+        Values[#Values + 1] = Value
+    end
+    print("Mutlidropdown changed:", table.concat(Values, ", "))
+end)
+
+local MultiInstanceDropdown = Tabs.Main:CreateDropdown("MultiInstanceDropdown", {
+    Title = "Instance Dropdown",
+    Description = "You can select multiple values and any instance or any other value!",
+    Values = {workspace, 5, Enum.JoinSource, Enum.MarketplaceBulkPurchasePromptStatus.Error},
+    Multi = true,
+    Default = {workspace},
+})
+
+MultiInstanceDropdown:OnChanged(function(Value)
+    local Values = {}
+    for Value, State in next, Value do
+        Values[#Values + 1] = typeof(Value)
+    end
+    print("Mutlidropdown with instance selection changed:", table.concat(Values, ", "))
+end)
+
+local Colorpicker = Tabs.Main:CreateColorpicker("Colorpicker", {
+    Title = "Colorpicker",
+    Default = Color3.fromRGB(96, 205, 255)
+})
+
+Colorpicker:OnChanged(function()
+    print("Colorpicker changed:", Colorpicker.Value)
+end)
+
+Colorpicker:SetValueRGB(Color3.fromRGB(0, 255, 140))
+
+local TColorpicker = Tabs.Main:CreateColorpicker("TransparencyColorpicker", {
+    Title = "Colorpicker",
+    Description = "but you can change the transparency.",
+    Transparency = 0,
+    Default = Color3.fromRGB(96, 205, 255)
+})
+
+TColorpicker:OnChanged(function()
+    print(
+        "TColorpicker changed:", TColorpicker.Value,
+        "Transparency:", TColorpicker.Transparency
+    )
+end)
+
+local Keybind = Tabs.Main:CreateKeybind("Keybind", {
+    Title = "KeyBind",
+    Mode = "Toggle", 
+    Default = "LeftControl", 
+
+    Callback = function(Value)
+        print("Keybind clicked!", Value)
+    end,
+
+    ChangedCallback = function(New)
+        print("Keybind changed!", New)
+    end
+})
+
+Keybind:OnClick(function()
+    print("Keybind clicked:", Keybind:GetState())
+end)
+
+Keybind:OnChanged(function()
+    print("Keybind changed:", Keybind.Value)
+end)
+
+task.spawn(function()
+    while true do
+        wait(1)
+
+        local state = Keybind:GetState()
+        if state then
+            print("Keybind is being held down")
+        end
+
+        if Library.Unloaded then break end
+    end
+end)
+
+Keybind:SetValue("MB2", "Toggle") 
+
+local Input = Tabs.Main:CreateInput("Input", {
+    Title = "Input",
+    Default = "Default",
+    Placeholder = "Placeholder",
+    Numeric = false, 
+    Finished = false, 
+
