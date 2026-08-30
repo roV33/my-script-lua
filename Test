@@ -1,0 +1,88 @@
+local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
+
+local Window = Luna:CreateWindow({
+	Name = "Colz Hub", 
+	Subtitle = "Beta", 
+	LogoID = "82795327169782", 
+	LoadingEnabled = true, 
+	LoadingTitle = "welcome back", 
+	LoadingSubtitle = "by R.O", 
+
+	ConfigSettings = {
+		RootFolder = nil,  
+		ConfigFolder = "Big Hub"
+	},
+
+	KeySystem = false, 
+	KeySettings = {
+		Title = "Luna Example Key",
+		Subtitle = "Key System",
+		Note = "Best Key System Ever! Also, Please Use A HWID Keysystem like Pelican, Luarmor etc. that provide key strings based on your HWID since putting a simple string is very easy to bypass",
+		SaveInRoot = false, 
+		SaveKey = true,  
+		Key = {"Example Key"},  
+		SecondAction = {
+			Enabled = true, 
+			Type = "Link", 
+			Parameter = "" 
+		}
+	}
+})
+Window:CreateHomeTab({
+	SupportedExecutors = {"Synapse X",
+                "Krnl",
+                "ProtoSmasher",
+                "Fluxus",
+                "Script-Ware",
+                "EasyExploits",
+                "Electron",
+                "JJSploit",
+                "Calamari",
+                "SirHurt",
+                "Sentinel",
+                "WEAREDEVS",
+                "Comet",
+                "Cellery",
+                "Wave",
+                "CODex",
+                "Delta"
+	DiscordInvite = "1234", 
+	Icon = 1, 
+}) 
+
+Luna:Notification({ 
+	Title = "Notification",
+	Icon = "notifications_active",
+	ImageSource = "Material",
+	Content = "thanks for using my script"
+})
+
+local Tab = Window:CreateTab({
+	Name = "main",
+	Icon = "bot",
+	ImageSource = "Material",
+	ShowTitle = true -- This will determine whether the big header text in the tab will show
+})
+
+local Dropdown = Tab:CreateDropdown({
+	Name = "target egg",
+    	Description = nil,
+	Options = {"test 1","test2 2"},
+    	CurrentOption = nil,
+    	MultipleOptions = true,
+    	SpecialType = nil,
+    	Callback = function(Options)
+     	 -- The function that takes place when the selected option is changed
+    	 -- If MultipleOptions is true then The variable (Options) is a table of strings for the current selected options. Else, it is a string of the currentoption
+	end
+}, "Dropdown") -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+
+local Toggle = Tab:CreateToggle({
+	Name = "auto farm egg",
+	Description = nil,
+	CurrentValue = false,
+    	Callback = function(Value)
+       	 -- The function that takes place when the toggle is switched
+       	 -- The variable (Value) is a boolean on whether the toggle is true or false
+    	end
+}, "Toggle") -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
